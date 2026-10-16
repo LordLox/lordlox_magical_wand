@@ -29,7 +29,7 @@ public final class Prova {
     public static final DeferredItem<GravityWandItem> GRAVITY_WAND = ITEMS.registerItem(
             "gravity_wand",
             GravityWandItem::new,
-            p -> p.stacksTo(1).rarity(Rarity.RARE)
+            p -> p.durability(250).rarity(Rarity.RARE)
     );
 
     // Creative Tab for Prova mod items
