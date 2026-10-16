@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "M": "minecraft:phantom_membrane",
+    "S": "#c:rods/wooden"
+  },
+  "pattern": [
+    "MAM",
+    " S ",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "prova:gravity_wand"
+  }
+}
