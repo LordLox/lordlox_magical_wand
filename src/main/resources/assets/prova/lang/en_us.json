@@ -1,13 +1,4 @@
 {
-  "itemGroup.prova": "Example Mod Tab",
-  "block.prova.example_block": "Example Block",
-  "item.prova.example_item": "Example Item",
-
-  "prova.configuration.title": "Prova Configs",
-  "prova.configuration.section.prova.common.toml": "Prova Configs",
-  "prova.configuration.section.prova.common.toml.title": "Prova Configs",
-  "prova.configuration.items": "Item List",
-  "prova.configuration.logDirtBlock": "Log Dirt Block",
-  "prova.configuration.magicNumberIntroduction": "Magic Number Text",
-  "prova.configuration.magicNumber": "Magic Number"
+  "itemGroup.prova": "Prova",
+  "item.prova.gravity_wand": "Gravity Wand"
 }
