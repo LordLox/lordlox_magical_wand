@@ -1,5 +1,6 @@
 package com.prova.provamod.item;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -12,10 +13,13 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
@@ -85,11 +89,38 @@ public class GravityWandItem extends Item {
                         level.playSound(null, tx, ty, tz,
                                 SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F, 0.9F + level.getRandom().nextFloat() * 0.3F);
 
-                        // Morte del bersaglio
+                        // Imposta il fuoco per far attivare le condizioni dei loot table (carne cotta)
+                        target.setRemainingFireTicks(100);
+                        target.igniteForSeconds(5);
                         target.invulnerableTime = 0;
                         target.hurtServer(serverLevel, serverLevel.damageSources().playerAttack(player), Float.MAX_VALUE);
                         if (target.isAlive()) {
                             target.kill(serverLevel);
+                        }
+
+                        // Conversione di sicurezza per qualsiasi carne/cibo droppato che puo essere cotto
+                        AABB dropBox = target.getBoundingBox().inflate(1.5);
+                        List<ItemEntity> droppedItems = serverLevel.getEntitiesOfClass(
+                                ItemEntity.class,
+                                dropBox,
+                                e -> e.isAlive() && e.tickCount <= 2
+                        );
+                        for (ItemEntity itemEntity : droppedItems) {
+                            ItemStack stack = itemEntity.getItem();
+                            if (stack.has(DataComponents.FOOD)) {
+                                SingleRecipeInput input = new SingleRecipeInput(stack);
+                                var recipe = serverLevel.recipeAccess().getRecipeFor(
+                                        RecipeType.SMELTING,
+                                        input,
+                                        serverLevel
+                                );
+                                if (recipe.isPresent()) {
+                                    ItemStack cooked = recipe.get().value().assemble(input);
+                                    if (!cooked.isEmpty()) {
+                                        itemEntity.setItem(cooked.copyWithCount(stack.getCount() * cooked.getCount()));
+                                    }
+                                }
+                            }
                         }
                     }
 
