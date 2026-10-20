@@ -17,10 +17,15 @@
   "entity.prova.spawn_portal": "Spawn Portal",
   "gui.prova.spawn_portal_wand.title": "SPAWN PORTAL WAND",
   "gui.prova.spawn_portal_wand.subtitle": "Choose the mob card you wish to summon from the portal",
+  "gui.prova.spawn_portal_wand.search_hint": "Search mob... (e.g. Zombie, Creeper)",
+  "gui.prova.spawn_portal_wand.no_results": "No mobs found matching search",
   "gui.prova.spawn_portal_wand.current_mob": "Active Mob in portal: %s",
   "gui.prova.spawn_portal_wand.cat_hostile": "HOSTILE",
   "gui.prova.spawn_portal_wand.cat_passive": "PASSIVE",
   "gui.prova.spawn_portal_wand.cat_neutral": "NEUTRAL",
   "gui.prova.spawn_portal_wand.cat_utility": "UTILITY",
-  "gui.prova.spawn_portal_wand.cat_boss": "BOSS"
+  "gui.prova.spawn_portal_wand.cat_boss": "BOSS",
+  "gui.prova.spawn_portal_wand.cat_aquatic": "AQUATIC",
+  "gui.prova.spawn_portal_wand.cat_ambient": "AMBIENT",
+  "gui.prova.spawn_portal_wand.cat_other": "OTHER"
 }

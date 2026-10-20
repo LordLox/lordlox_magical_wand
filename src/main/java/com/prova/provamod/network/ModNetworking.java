@@ -2,7 +2,9 @@ package com.prova.provamod.network;
 
 import com.prova.provamod.Prova;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -23,6 +25,7 @@ public class ModNetworking {
         );
     }
 
+    @SuppressWarnings("null")
     public static void handleSelectPortalMob(SelectPortalMobPayload payload, IPayloadContext context) {
         Player player = context.player();
         if (player == null) {
@@ -36,9 +39,15 @@ public class ModNetworking {
             stack.set(Prova.SELECTED_MOB.get(), payload.mobId());
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.7F, 1.2F);
+
+            Identifier id = Identifier.tryParse(payload.mobId());
+            Component mobName = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id)
+                    .map(type -> type.getDescription())
+                    .orElseGet(() -> Component.translatable("entity." + payload.mobId().replace(':', '.')))
+                    : Component.translatable("entity." + payload.mobId().replace(':', '.'));
+
             player.sendOverlayMessage(
-                    Component.translatable("item.prova.spawn_portal_wand.selected",
-                            Component.translatable("entity." + payload.mobId().replace(':', '.')))
+                    Component.translatable("item.prova.spawn_portal_wand.selected", mobName)
                             .withStyle(ChatFormatting.GREEN)
             );
         }

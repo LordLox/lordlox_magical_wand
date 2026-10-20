@@ -17,10 +17,15 @@
   "entity.prova.spawn_portal": "Portale di Generazione",
   "gui.prova.spawn_portal_wand.title": "BACCHETTA PORTALE DI GENERAZIONE",
   "gui.prova.spawn_portal_wand.subtitle": "Scegli la carta del mob che desideri far uscire dal portale",
+  "gui.prova.spawn_portal_wand.search_hint": "Cerca mob... (es. Zombie, Creeper)",
+  "gui.prova.spawn_portal_wand.no_results": "Nessun mob trovato per la ricerca",
   "gui.prova.spawn_portal_wand.current_mob": "Mob attivo nel portale: %s",
   "gui.prova.spawn_portal_wand.cat_hostile": "OSTILE",
   "gui.prova.spawn_portal_wand.cat_passive": "PASSIVO",
   "gui.prova.spawn_portal_wand.cat_neutral": "NEUTRALE",
   "gui.prova.spawn_portal_wand.cat_utility": "UTILITÀ",
-  "gui.prova.spawn_portal_wand.cat_boss": "BOSS"
+  "gui.prova.spawn_portal_wand.cat_boss": "BOSS",
+  "gui.prova.spawn_portal_wand.cat_aquatic": "ACQUATICO",
+  "gui.prova.spawn_portal_wand.cat_ambient": "AMBIENTALE",
+  "gui.prova.spawn_portal_wand.cat_other": "ALTRO"
 }

@@ -2,8 +2,10 @@ package com.prova.provamod.client.gui;
 
 import com.prova.provamod.network.SelectPortalMobPayload;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -15,27 +17,43 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class SpawnPortalWandScreen extends Screen {
 
-    private static final int CARDS_PER_ROW = 4;
     private static final int ROWS = 2;
-    private static final int CARDS_PER_PAGE = CARDS_PER_ROW * ROWS; // 8 cards per page
-    private static final int CARD_WIDTH = 76;
-    private static final int CARD_HEIGHT = 100;
-    private static final int CARD_GAP_X = 10;
-    private static final int CARD_GAP_Y = 10;
+    private static final int CARD_WIDTH = 62;
+    private static final int CARD_HEIGHT = 74;
+    private static final int CARD_GAP_X = 6;
+    private static final int CARD_GAP_Y = 6;
+    private static final int PANEL_HEIGHT = 222;
 
     private final InteractionHand hand;
     private String selectedMobId;
     private int currentPage = 0;
-    private final int totalPages;
+    private int totalPages = 1;
+
     private final List<PortalMobRegistry.MobCardEntry> allMobs;
+    private final List<PortalMobRegistry.MobCardEntry> filteredMobs = new ArrayList<>();
     private final Map<String, LivingEntity> dummyEntityCache = new HashMap<>();
 
+    private int cardsPerRow = 5;
+    private int cardsPerPage = 10;
+    private int gridStartX;
+    private int gridStartY;
+    private int totalGridWidth;
+    private int totalGridHeight;
+    private int panelX0;
+    private int panelY0;
+    private int panelX1;
+    private int panelY1;
+    private int footerY;
+
+    private String searchQuery = "";
+    private EditBox searchBox;
     private Button prevButton;
     private Button nextButton;
 
@@ -43,33 +61,89 @@ public class SpawnPortalWandScreen extends Screen {
         super(Component.translatable("gui.prova.spawn_portal_wand.title"));
         this.hand = hand;
         this.selectedMobId = currentSelectedMobId != null ? currentSelectedMobId : "minecraft:zombie";
-        this.allMobs = PortalMobRegistry.getAll();
-        this.totalPages = Math.max(1, (int) Math.ceil((double) allMobs.size() / CARDS_PER_PAGE));
+
+        Minecraft mc = Minecraft.getInstance();
+        this.allMobs = PortalMobRegistry.getAll(mc.level);
+        this.filteredMobs.addAll(this.allMobs);
     }
 
     @Override
     protected void init() {
         super.init();
 
-        int totalGridWidth = CARDS_PER_ROW * CARD_WIDTH + (CARDS_PER_ROW - 1) * CARD_GAP_X;
-        int gridStartX = (this.width - totalGridWidth) / 2;
-        int gridStartY = (this.height - (ROWS * CARD_HEIGHT + (ROWS - 1) * CARD_GAP_Y)) / 2 + 10;
-        int footerY = gridStartY + ROWS * CARD_HEIGHT + (ROWS - 1) * CARD_GAP_Y + 12;
+        this.cardsPerRow = (this.width < 370) ? 4 : 5;
+        this.cardsPerPage = this.cardsPerRow * ROWS;
 
-        // Navigation buttons
+        this.totalGridWidth = cardsPerRow * CARD_WIDTH + (cardsPerRow - 1) * CARD_GAP_X;
+        this.totalGridHeight = ROWS * CARD_HEIGHT + (ROWS - 1) * CARD_GAP_Y;
+
+        this.panelY0 = Math.max(4, (this.height - PANEL_HEIGHT) / 2);
+        this.panelY1 = this.panelY0 + PANEL_HEIGHT;
+
+        int panelPadding = 10;
+        this.gridStartX = (this.width - totalGridWidth) / 2;
+        this.gridStartY = panelY0 + 38;
+        this.panelX0 = gridStartX - panelPadding;
+        this.panelX1 = gridStartX + totalGridWidth + panelPadding;
+        this.footerY = panelY0 + 196;
+
+        // Search Bar in header
+        int searchBoxWidth = Math.min(220, totalGridWidth);
+        int searchBoxX = (this.width - searchBoxWidth) / 2;
+        int searchBoxY = panelY0 + 18;
+
+        this.searchBox = new EditBox(this.font, searchBoxX, searchBoxY, searchBoxWidth, 16,
+                Component.translatable("gui.prova.spawn_portal_wand.search_hint"));
+        this.searchBox.setHint(Component.translatable("gui.prova.spawn_portal_wand.search_hint").withStyle(ChatFormatting.DARK_GRAY));
+        this.searchBox.setMaxLength(36);
+        this.searchBox.setValue(this.searchQuery);
+        this.searchBox.setResponder(this::onSearchQueryChanged);
+        this.addRenderableWidget(this.searchBox);
+
+        // Navigation buttons in footer
+        int btnWidth = 24;
+        int btnHeight = 18;
+
         this.prevButton = this.addRenderableWidget(
                 Button.builder(Component.literal("◀"), b -> changePage(-1))
-                        .bounds(gridStartX, footerY, 28, 20)
+                        .bounds(gridStartX, footerY, btnWidth, btnHeight)
                         .build()
         );
 
         this.nextButton = this.addRenderableWidget(
                 Button.builder(Component.literal("▶"), b -> changePage(1))
-                        .bounds(gridStartX + totalGridWidth - 28, footerY, 28, 20)
+                        .bounds(gridStartX + totalGridWidth - btnWidth, footerY, btnWidth, btnHeight)
                         .build()
         );
 
+        recalculatePages();
         updateButtonStates();
+    }
+
+    private void onSearchQueryChanged(String query) {
+        this.searchQuery = query.trim().toLowerCase();
+        this.filteredMobs.clear();
+
+        if (this.searchQuery.isEmpty()) {
+            this.filteredMobs.addAll(this.allMobs);
+        } else {
+            for (PortalMobRegistry.MobCardEntry entry : this.allMobs) {
+                String name = entry.displayName().getString().toLowerCase();
+                String id = entry.id().toLowerCase();
+                if (name.contains(this.searchQuery) || id.contains(this.searchQuery)) {
+                    this.filteredMobs.add(entry);
+                }
+            }
+        }
+
+        this.currentPage = 0;
+        recalculatePages();
+        updateButtonStates();
+    }
+
+    private void recalculatePages() {
+        this.totalPages = Math.max(1, (int) Math.ceil((double) filteredMobs.size() / cardsPerPage));
+        this.currentPage = Math.clamp(this.currentPage, 0, totalPages - 1);
     }
 
     private void changePage(int delta) {
@@ -94,7 +168,7 @@ public class SpawnPortalWandScreen extends Screen {
             if (minecraft != null && minecraft.level != null) {
                 try {
                     return entry.entityType().create(minecraft.level, EntitySpawnReason.TRIGGERED);
-                } catch (Exception ignored) {
+                } catch (Throwable ignored) {
                     return null;
                 }
             }
@@ -104,20 +178,8 @@ public class SpawnPortalWandScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        // Subtle background tint
+        // Dark background tint
         graphics.fill(0, 0, this.width, this.height, 0x880A0812);
-
-        int totalGridWidth = CARDS_PER_ROW * CARD_WIDTH + (CARDS_PER_ROW - 1) * CARD_GAP_X;
-        int totalGridHeight = ROWS * CARD_HEIGHT + (ROWS - 1) * CARD_GAP_Y;
-        int gridStartX = (this.width - totalGridWidth) / 2;
-        int gridStartY = (this.height - totalGridHeight) / 2 + 10;
-
-        // Panel background with glow
-        int panelPadding = 12;
-        int panelX0 = gridStartX - panelPadding;
-        int panelY0 = gridStartY - 38;
-        int panelX1 = gridStartX + totalGridWidth + panelPadding;
-        int panelY1 = gridStartY + totalGridHeight + 38;
 
         // Outer dark panel
         graphics.fill(panelX0, panelY0, panelX1, panelY1, 0xEE110F1D);
@@ -127,44 +189,63 @@ public class SpawnPortalWandScreen extends Screen {
         // Header Title
         graphics.centeredText(this.font,
                 Component.translatable("gui.prova.spawn_portal_wand.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-                this.width / 2, gridStartY - 30, 0xFFFFD700);
+                this.width / 2, panelY0 + 6, 0xFFFFD700);
 
-        // Header Subtitle
-        graphics.centeredText(this.font,
-                Component.translatable("gui.prova.spawn_portal_wand.subtitle").withStyle(ChatFormatting.AQUA),
-                this.width / 2, gridStartY - 18, 0xFF79E6F3);
+        // Draw Cards or empty notice
+        if (filteredMobs.isEmpty()) {
+            graphics.centeredText(this.font,
+                    Component.translatable("gui.prova.spawn_portal_wand.no_results").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
+                    this.width / 2, gridStartY + totalGridHeight / 2 - 4, 0xFFAAAAAA);
+        } else {
+            int startIndex = currentPage * cardsPerPage;
+            int endIndex = Math.min(startIndex + cardsPerPage, filteredMobs.size());
 
-        // Draw Cards
-        int startIndex = currentPage * CARDS_PER_PAGE;
-        int endIndex = Math.min(startIndex + CARDS_PER_PAGE, allMobs.size());
+            PortalMobRegistry.MobCardEntry hoveredEntry = null;
 
-        for (int i = startIndex; i < endIndex; i++) {
-            int localIndex = i - startIndex;
-            int col = localIndex % CARDS_PER_ROW;
-            int row = localIndex / CARDS_PER_ROW;
+            for (int i = startIndex; i < endIndex; i++) {
+                int localIndex = i - startIndex;
+                int col = localIndex % cardsPerRow;
+                int row = localIndex / cardsPerRow;
 
-            int cardX = gridStartX + col * (CARD_WIDTH + CARD_GAP_X);
-            int cardY = gridStartY + row * (CARD_HEIGHT + CARD_GAP_Y);
+                int cardX = gridStartX + col * (CARD_WIDTH + CARD_GAP_X);
+                int cardY = gridStartY + row * (CARD_HEIGHT + CARD_GAP_Y);
 
-            boolean isHovered = mouseX >= cardX && mouseX < cardX + CARD_WIDTH && mouseY >= cardY && mouseY < cardY + CARD_HEIGHT;
-            PortalMobRegistry.MobCardEntry entry = allMobs.get(i);
-            boolean isSelected = entry.id().equals(this.selectedMobId);
+                boolean isHovered = mouseX >= cardX && mouseX < cardX + CARD_WIDTH && mouseY >= cardY && mouseY < cardY + CARD_HEIGHT;
+                PortalMobRegistry.MobCardEntry entry = filteredMobs.get(i);
+                boolean isSelected = entry.id().equals(this.selectedMobId);
 
-            renderCard(graphics, entry, cardX, cardY, isHovered, isSelected, mouseX, mouseY);
+                renderCard(graphics, entry, cardX, cardY, isHovered, isSelected, mouseX, mouseY);
+
+                if (isHovered) {
+                    hoveredEntry = entry;
+                }
+            }
+
+            // Show tooltip when hovering over a mob card
+            if (hoveredEntry != null) {
+                graphics.setComponentTooltipForNextFrame(
+                        this.font,
+                        List.of(
+                                hoveredEntry.displayName(),
+                                Component.literal(hoveredEntry.id()).withStyle(ChatFormatting.DARK_GRAY)
+                        ),
+                        mouseX,
+                        mouseY
+                );
+            }
         }
 
         // Render Page indicator in footer
-        int footerY = gridStartY + totalGridHeight + 17;
         String pageStr = String.format("Pagina %d / %d", currentPage + 1, totalPages);
-        graphics.centeredText(this.font, Component.literal(pageStr).withStyle(ChatFormatting.WHITE), this.width / 2, footerY, 0xFFFFFFFF);
+        graphics.centeredText(this.font, Component.literal(pageStr).withStyle(ChatFormatting.WHITE), this.width / 2, footerY + 1, 0xFFFFFFFF);
 
-        // Render Active Mob indicator at very bottom
+        // Render Active Mob indicator at very bottom of footer
         PortalMobRegistry.MobCardEntry selectedEntry = PortalMobRegistry.getById(this.selectedMobId);
         Component mobName = selectedEntry != null ? selectedEntry.displayName() : Component.literal(this.selectedMobId);
         Component statusText = Component.translatable("gui.prova.spawn_portal_wand.current_mob", mobName).withStyle(ChatFormatting.YELLOW);
-        graphics.centeredText(this.font, statusText, this.width / 2, panelY1 - 14, 0xFFFFEE77);
+        graphics.centeredText(this.font, statusText, this.width / 2, footerY + 11, 0xFFFFEE77);
 
-        // Render child widgets (buttons)
+        // Render child widgets (SearchBox & Buttons)
         super.extractRenderState(graphics, mouseX, mouseY, a);
     }
 
@@ -177,14 +258,11 @@ public class SpawnPortalWandScreen extends Screen {
 
         // Card Border
         if (isSelected) {
-            // Radiant golden double border for selected card
             graphics.outline(cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 0xFFFFD700);
             graphics.outline(cardX + 1, cardY + 1, CARD_WIDTH - 2, CARD_HEIGHT - 2, 0xFFFFEA75);
         } else if (isHovered) {
-            // Neon cyan border for hovered card
             graphics.outline(cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 0xFF5CE1E6);
         } else {
-            // Subtle dark slate border for unselected card
             graphics.outline(cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 0xFF352E4B);
         }
 
@@ -192,44 +270,53 @@ public class SpawnPortalWandScreen extends Screen {
         Component name = entry.displayName();
         int maxNameWidth = CARD_WIDTH - 6;
         if (font.width(name) > maxNameWidth) {
-            String rawStr = font.plainSubstrByWidth(name.getString(), maxNameWidth - 6) + "…";
+            String rawStr = font.plainSubstrByWidth(name.getString(), maxNameWidth - 4) + "…";
             name = Component.literal(rawStr);
         }
         int nameColor = isSelected ? 0xFFFFD700 : (isHovered ? 0xFFFFFFFF : 0xFFCCCCCC);
-        graphics.centeredText(this.font, name, cardX + CARD_WIDTH / 2, cardY + 5, nameColor);
+        graphics.centeredText(this.font, name, cardX + CARD_WIDTH / 2, cardY + 4, nameColor);
 
         // Center: 3D Living Entity Render
         LivingEntity dummy = getOrCreateDummy(entry);
         if (dummy != null) {
-            InventoryScreen.extractEntityInInventoryFollowsMouse(
-                    graphics,
-                    cardX + 4,
-                    cardY + 16,
-                    cardX + CARD_WIDTH - 4,
-                    cardY + CARD_HEIGHT - 18,
-                    entry.previewScale(),
-                    entry.previewOffsetY(),
-                    mouseX,
-                    mouseY,
-                    dummy
-            );
+            try {
+                InventoryScreen.extractEntityInInventoryFollowsMouse(
+                        graphics,
+                        cardX + 2,
+                        cardY + 14,
+                        cardX + CARD_WIDTH - 2,
+                        cardY + CARD_HEIGHT - 14,
+                        entry.previewScale(),
+                        entry.previewOffsetY(),
+                        mouseX,
+                        mouseY,
+                        dummy
+                );
+            } catch (Throwable ignored) {
+                graphics.centeredText(this.font, Component.literal("?").withStyle(ChatFormatting.DARK_GRAY),
+                        cardX + CARD_WIDTH / 2, cardY + CARD_HEIGHT / 2 - 4, 0xFF888888);
+            }
         }
 
-        // Bottom Badge: Category or "SELEZIONATO"
-        int badgeY0 = cardY + CARD_HEIGHT - 15;
-        int badgeY1 = cardY + CARD_HEIGHT - 4;
-        int badgeX0 = cardX + 5;
-        int badgeX1 = cardX + CARD_WIDTH - 5;
+        // Bottom Badge: Category or "✓ ATTIVO"
+        int badgeY0 = cardY + CARD_HEIGHT - 12;
+        int badgeY1 = cardY + CARD_HEIGHT - 3;
+        int badgeX0 = cardX + 3;
+        int badgeX1 = cardX + CARD_WIDTH - 3;
 
         if (isSelected) {
             graphics.fill(badgeX0, badgeY0, badgeX1, badgeY1, 0xFFB8860B);
             graphics.centeredText(this.font,
                     Component.literal("✓ ATTIVO").withStyle(ChatFormatting.BLACK, ChatFormatting.BOLD),
-                    cardX + CARD_WIDTH / 2, badgeY0 + 2, 0xFF000000);
+                    cardX + CARD_WIDTH / 2, badgeY0 + 1, 0xFF000000);
         } else {
-            // Category tag
             graphics.fill(badgeX0, badgeY0, badgeX1, badgeY1, 0x44000000);
-            graphics.centeredText(this.font, entry.categoryName(), cardX + CARD_WIDTH / 2, badgeY0 + 2, entry.categoryColor());
+            Component cat = entry.categoryName();
+            if (font.width(cat) > CARD_WIDTH - 8) {
+                String shortCat = font.plainSubstrByWidth(cat.getString(), CARD_WIDTH - 10);
+                cat = Component.literal(shortCat);
+            }
+            graphics.centeredText(this.font, cat, cardX + CARD_WIDTH / 2, badgeY0 + 1, entry.categoryColor());
         }
     }
 
@@ -243,32 +330,25 @@ public class SpawnPortalWandScreen extends Screen {
             double mouseX = event.x();
             double mouseY = event.y();
 
-            int totalGridWidth = CARDS_PER_ROW * CARD_WIDTH + (CARDS_PER_ROW - 1) * CARD_GAP_X;
-            int totalGridHeight = ROWS * CARD_HEIGHT + (ROWS - 1) * CARD_GAP_Y;
-            int gridStartX = (this.width - totalGridWidth) / 2;
-            int gridStartY = (this.height - totalGridHeight) / 2 + 10;
-
-            int startIndex = currentPage * CARDS_PER_PAGE;
-            int endIndex = Math.min(startIndex + CARDS_PER_PAGE, allMobs.size());
+            int startIndex = currentPage * cardsPerPage;
+            int endIndex = Math.min(startIndex + cardsPerPage, filteredMobs.size());
 
             for (int i = startIndex; i < endIndex; i++) {
                 int localIndex = i - startIndex;
-                int col = localIndex % CARDS_PER_ROW;
-                int row = localIndex / CARDS_PER_ROW;
+                int col = localIndex % cardsPerRow;
+                int row = localIndex / cardsPerRow;
 
                 int cardX = gridStartX + col * (CARD_WIDTH + CARD_GAP_X);
                 int cardY = gridStartY + row * (CARD_HEIGHT + CARD_GAP_Y);
 
                 if (mouseX >= cardX && mouseX < cardX + CARD_WIDTH && mouseY >= cardY && mouseY < cardY + CARD_HEIGHT) {
-                    PortalMobRegistry.MobCardEntry entry = allMobs.get(i);
+                    PortalMobRegistry.MobCardEntry entry = filteredMobs.get(i);
                     this.selectedMobId = entry.id();
 
-                    // Play selection sound
                     if (minecraft != null) {
                         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.2F));
                     }
 
-                    // Send selection payload to server
                     int handIdx = (hand == InteractionHand.OFF_HAND) ? 1 : 0;
                     ClientPacketDistributor.sendToServer(new SelectPortalMobPayload(handIdx, entry.id()));
                     return true;
@@ -277,6 +357,19 @@ public class SpawnPortalWandScreen extends Screen {
         }
 
         return false;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (scrollY != 0) {
+            if (scrollY < 0) {
+                changePage(1);
+            } else {
+                changePage(-1);
+            }
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override

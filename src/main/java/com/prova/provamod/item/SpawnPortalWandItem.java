@@ -10,6 +10,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -164,16 +166,20 @@ public class SpawnPortalWandItem extends Item {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "null"})
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipOutput, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltipOutput, flag);
 
         String selectedMob = stack.get(Prova.SELECTED_MOB.get());
         if (selectedMob != null && !selectedMob.isEmpty()) {
-            String translationKey = selectedMob.replace(':', '.');
+            Identifier id = Identifier.tryParse(selectedMob);
+            Component mobName = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id)
+                    .map(type -> type.getDescription())
+                    .orElseGet(() -> Component.translatable("entity." + selectedMob.replace(':', '.')))
+                    : Component.translatable("entity." + selectedMob.replace(':', '.'));
+
             tooltipOutput.accept(
-                    Component.translatable("item.prova.spawn_portal_wand.selected",
-                            Component.translatable("entity." + translationKey))
+                    Component.translatable("item.prova.spawn_portal_wand.selected", mobName)
                             .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
             );
         } else {
