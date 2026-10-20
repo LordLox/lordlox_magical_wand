@@ -5,5 +5,22 @@
   "item.prova.black_hole_wand.desc1": "Right-Click: Tear spacetime into an active singularity",
   "item.prova.black_hole_wand.desc2": "Attracts nearby entities into a gravitational vortex",
   "item.prova.black_hole_wand.desc3": "Deals continuous damage within the event horizon",
-  "entity.prova.black_hole": "Black Hole"
+  "entity.prova.black_hole": "Black Hole",
+  "item.prova.spawn_portal_wand": "Spawn Portal Wand",
+  "item.prova.spawn_portal_wand.selected": "Selected Mob: %s",
+  "item.prova.spawn_portal_wand.none_selected": "No mob selected (Shift + Right-Click to choose)",
+  "item.prova.spawn_portal_wand.desc1": "Shift + Right-Click: Open 3D mob card selection screen",
+  "item.prova.spawn_portal_wand.desc2": "Right-Click: Summon a floating Spawn Portal",
+  "item.prova.spawn_portal_wand.desc3": "Summoning Cost: 2 Diamonds",
+  "item.prova.spawn_portal_wand.need_diamonds": "You need at least 2 diamonds in your inventory to activate the wand!",
+  "item.prova.spawn_portal_wand.no_mob_selected": "Select a mob first using Shift + Right-Click!",
+  "entity.prova.spawn_portal": "Spawn Portal",
+  "gui.prova.spawn_portal_wand.title": "SPAWN PORTAL WAND",
+  "gui.prova.spawn_portal_wand.subtitle": "Choose the mob card you wish to summon from the portal",
+  "gui.prova.spawn_portal_wand.current_mob": "Active Mob in portal: %s",
+  "gui.prova.spawn_portal_wand.cat_hostile": "HOSTILE",
+  "gui.prova.spawn_portal_wand.cat_passive": "PASSIVE",
+  "gui.prova.spawn_portal_wand.cat_neutral": "NEUTRAL",
+  "gui.prova.spawn_portal_wand.cat_utility": "UTILITY",
+  "gui.prova.spawn_portal_wand.cat_boss": "BOSS"
 }

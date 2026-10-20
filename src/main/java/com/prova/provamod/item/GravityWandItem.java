@@ -43,7 +43,7 @@ public class GravityWandItem extends Item {
             List<LivingEntity> targets = level.getEntitiesOfClass(
                     LivingEntity.class,
                     area,
-                    e -> e != player && e.isAlive() && !e.isSpectator() && !(e instanceof ArmorStand)
+                    e -> e != null && e != player && e.isAlive() && !e.isSpectator() && !(e instanceof ArmorStand)
             );
 
             // Ordina i bersagli partendo da quelli più vicini al giocatore
@@ -103,7 +103,7 @@ public class GravityWandItem extends Item {
                         List<ItemEntity> droppedItems = serverLevel.getEntitiesOfClass(
                                 ItemEntity.class,
                                 dropBox,
-                                e -> e.isAlive() && e.tickCount <= 2
+                                e -> e != null && e.isAlive() && e.tickCount <= 2
                         );
                         for (ItemEntity itemEntity : droppedItems) {
                             ItemStack stack = itemEntity.getItem();

@@ -19,7 +19,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TraceableEntity;
@@ -256,9 +255,9 @@ public class BlackHoleEntity extends Entity implements TraceableEntity {
         if (this.tickCount % 2 == 0) {
             List<FallingBlockEntity> orbitingBlocks = serverLevel.getEntitiesOfClass(
                     FallingBlockEntity.class,
-                    pullBox,
-                    EntitySelector.ENTITY_STILL_ALIVE
+                    pullBox
             );
+            orbitingBlocks.removeIf(b -> b == null || !b.isAlive());
 
             if (orbitingBlocks.size() < MAX_ORBITING_BLOCKS) {
                 int blocksToRip = (orbitingBlocks.size() < 8) ? 2 : 1;
@@ -273,7 +272,7 @@ public class BlackHoleEntity extends Entity implements TraceableEntity {
 
         final UUID currentOwner = this.ownerUUID;
         List<Entity> affectedEntities = serverLevel.getEntities(this, pullBox, e -> {
-            if (e == this) return false;
+            if (e == null || e == this) return false;
             // The player who cast it is completely exempt from pull and damage
             if (currentOwner != null && e.getUUID().equals(currentOwner)) return false;
             if (e instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -499,12 +498,12 @@ public class BlackHoleEntity extends Entity implements TraceableEntity {
             // 1. Fling all orbiting falling blocks and fluids outward and upward into the surroundings!
             List<FallingBlockEntity> orbitingBlocks = serverLevel.getEntitiesOfClass(
                     FallingBlockEntity.class,
-                    getBoundingBox().inflate(GRAVITY_RADIUS),
-                    EntitySelector.ENTITY_STILL_ALIVE
+                    getBoundingBox().inflate(GRAVITY_RADIUS)
             );
 
             RandomSource rand = this.getRandom();
             for (FallingBlockEntity fb : orbitingBlocks) {
+                if (fb == null || !fb.isAlive()) continue;
                 Vec3 outward = fb.position().subtract(center);
                 Vec3 horiz;
                 if (outward.x * outward.x + outward.z * outward.z < 0.04) {
@@ -531,6 +530,7 @@ public class BlackHoleEntity extends Entity implements TraceableEntity {
             AABB finalArea = getBoundingBox().inflate(5.0);
             final UUID currentOwner = this.ownerUUID;
             List<LivingEntity> trapped = serverLevel.getEntitiesOfClass(LivingEntity.class, finalArea, e -> {
+                if (e == null) return false;
                 if (currentOwner != null && e.getUUID().equals(currentOwner)) return false;
                 if (e instanceof Player p && (p.isCreative() || p.isSpectator())) return false;
                 return e.isAlive();

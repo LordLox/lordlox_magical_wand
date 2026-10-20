@@ -1,6 +1,7 @@
 package com.prova.provamod;
 
 import com.prova.provamod.client.renderer.BlackHoleRenderer;
+import com.prova.provamod.client.renderer.SpawnPortalRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -21,5 +22,6 @@ public final class ProvaClient {
 
     private void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Prova.BLACK_HOLE.get(), BlackHoleRenderer::new);
+        event.registerEntityRenderer(Prova.SPAWN_PORTAL.get(), SpawnPortalRenderer::new);
     }
 }

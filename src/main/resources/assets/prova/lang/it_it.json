@@ -5,5 +5,22 @@
   "item.prova.black_hole_wand.desc1": "Tasto Destro: Squarcia lo spaziotempo generando una singolarità",
   "item.prova.black_hole_wand.desc2": "Attira nemici e giocatori nel suo vortice gravitazionale",
   "item.prova.black_hole_wand.desc3": "Infligge danni continui all'interno dell'orizzonte degli eventi",
-  "entity.prova.black_hole": "Buco Nero"
+  "entity.prova.black_hole": "Buco Nero",
+  "item.prova.spawn_portal_wand": "Bacchetta Portale di Generazione",
+  "item.prova.spawn_portal_wand.selected": "Mob Selezionato: %s",
+  "item.prova.spawn_portal_wand.none_selected": "Nessun mob selezionato (Shift + Tasto Destro per scegliere)",
+  "item.prova.spawn_portal_wand.desc1": "Shift + Tasto Destro: Apri il selettore dei mob a carte 3D",
+  "item.prova.spawn_portal_wand.desc2": "Tasto Destro: Evoca un Portale di Generazione volante",
+  "item.prova.spawn_portal_wand.desc3": "Costo per evocazione: 2 Diamanti",
+  "item.prova.spawn_portal_wand.need_diamonds": "Ti servono almeno 2 diamanti nell'inventario per attivare la bacchetta!",
+  "item.prova.spawn_portal_wand.no_mob_selected": "Seleziona prima un mob usando Shift + Tasto Destro!",
+  "entity.prova.spawn_portal": "Portale di Generazione",
+  "gui.prova.spawn_portal_wand.title": "BACCHETTA PORTALE DI GENERAZIONE",
+  "gui.prova.spawn_portal_wand.subtitle": "Scegli la carta del mob che desideri far uscire dal portale",
+  "gui.prova.spawn_portal_wand.current_mob": "Mob attivo nel portale: %s",
+  "gui.prova.spawn_portal_wand.cat_hostile": "OSTILE",
+  "gui.prova.spawn_portal_wand.cat_passive": "PASSIVO",
+  "gui.prova.spawn_portal_wand.cat_neutral": "NEUTRALE",
+  "gui.prova.spawn_portal_wand.cat_utility": "UTILITÀ",
+  "gui.prova.spawn_portal_wand.cat_boss": "BOSS"
 }

@@ -4,11 +4,17 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
+import com.mojang.serialization.Codec;
 import com.prova.provamod.entity.BlackHoleEntity;
+import com.prova.provamod.entity.SpawnPortalEntity;
 import com.prova.provamod.item.BlackHoleWandItem;
 import com.prova.provamod.item.GravityWandItem;
+import com.prova.provamod.item.SpawnPortalWandItem;
+import com.prova.provamod.network.ModNetworking;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
@@ -31,6 +37,16 @@ public final class Prova {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(Registries.ENTITY_TYPE, MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MODID);
+
+    // Data Component for storing selected mob ID
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> SELECTED_MOB = DATA_COMPONENT_TYPES.register(
+            "selected_mob",
+            () -> DataComponentType.<String>builder()
+                    .persistent(Codec.STRING)
+                    .networkSynchronized(ByteBufCodecs.STRING_UTF8)
+                    .build()
+    );
 
     // Gravity Wand custom item
     public static final DeferredItem<GravityWandItem> GRAVITY_WAND = ITEMS.registerItem(
@@ -46,6 +62,13 @@ public final class Prova {
             p -> p.durability(100).rarity(Rarity.EPIC)
     );
 
+    // Spawn Portal Wand custom item
+    public static final DeferredItem<SpawnPortalWandItem> SPAWN_PORTAL_WAND = ITEMS.registerItem(
+            "spawn_portal_wand",
+            SpawnPortalWandItem::new,
+            p -> p.durability(100).rarity(Rarity.EPIC)
+    );
+
     // Black Hole Entity
     public static final DeferredHolder<EntityType<?>, EntityType<BlackHoleEntity>> BLACK_HOLE = ENTITIES.register(
             "black_hole",
@@ -56,14 +79,25 @@ public final class Prova {
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(MODID, "black_hole")))
     );
 
+    // Spawn Portal Entity
+    public static final DeferredHolder<EntityType<?>, EntityType<SpawnPortalEntity>> SPAWN_PORTAL = ENTITIES.register(
+            "spawn_portal",
+            () -> EntityType.Builder.<SpawnPortalEntity>of(SpawnPortalEntity::new, MobCategory.MISC)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(MODID, "spawn_portal")))
+    );
+
     // Creative Tab for Prova mod items
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PROVA_TAB = CREATIVE_MODE_TABS.register("prova_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.prova"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> BLACK_HOLE_WAND.get().getDefaultInstance())
+            .icon(() -> SPAWN_PORTAL_WAND.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(GRAVITY_WAND.get());
                 output.accept(BLACK_HOLE_WAND.get());
+                output.accept(SPAWN_PORTAL_WAND.get());
             })
             .build());
 
@@ -72,5 +106,8 @@ public final class Prova {
         ITEMS.register(modEventBus);
         ENTITIES.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
+        DATA_COMPONENT_TYPES.register(modEventBus);
+
+        modEventBus.addListener(ModNetworking::registerPayloads);
     }
 }
