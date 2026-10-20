@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": "minecraft:echo_shard",
+    "M": "minecraft:phantom_membrane",
+    "S": "#c:rods/wooden"
+  },
+  "pattern": [
+    "MEM",
+    " S ",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "prova:black_hole_wand"
+  }
+}
