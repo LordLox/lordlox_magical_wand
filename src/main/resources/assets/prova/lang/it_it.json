@@ -1,0 +1,9 @@
+{
+  "itemGroup.prova": "Prova",
+  "item.prova.gravity_wand": "Bacchetta della Gravità",
+  "item.prova.black_hole_wand": "Bacchetta del Buco Nero",
+  "item.prova.black_hole_wand.desc1": "Tasto Destro: Squarcia lo spaziotempo generando una singolarità",
+  "item.prova.black_hole_wand.desc2": "Attira nemici e giocatori nel suo vortice gravitazionale",
+  "item.prova.black_hole_wand.desc3": "Infligge danni continui all'interno dell'orizzonte degli eventi",
+  "entity.prova.black_hole": "Buco Nero"
+}

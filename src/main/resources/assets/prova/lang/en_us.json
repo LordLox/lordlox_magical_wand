@@ -1,4 +1,9 @@
 {
   "itemGroup.prova": "Prova",
-  "item.prova.gravity_wand": "Gravity Wand"
+  "item.prova.gravity_wand": "Gravity Wand",
+  "item.prova.black_hole_wand": "Black Hole Wand",
+  "item.prova.black_hole_wand.desc1": "Right-Click: Tear spacetime into an active singularity",
+  "item.prova.black_hole_wand.desc2": "Attracts nearby entities into a gravitational vortex",
+  "item.prova.black_hole_wand.desc3": "Deals continuous damage within the event horizon",
+  "entity.prova.black_hole": "Black Hole"
 }
