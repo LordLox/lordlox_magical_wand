@@ -173,21 +173,43 @@ idea {
 def fixVsCodeLaunchJson = {
     def launchJson = file('.vscode/launch.json')
     if (launchJson.exists()) {
-        def text = launchJson.getText('UTF-8')
-        def escapedDir = project.projectDir.absolutePath.replace('\\', '\\\\')
-        def replacement = "-Dfml.modFolders=${mod_id}%%${escapedDir}\\\\build\\\\classes\\\\java\\\\main;${mod_id}%%${escapedDir}\\\\build\\\\resources\\\\main"
-        def fixed = text.replaceAll(
-            "-Dfml\\.modFolders(\\\\u003d|=)${mod_id}%%[^\"]*?[\\\\/]+bin[\\\\/]+main",
-            java.util.regex.Matcher.quoteReplacement(replacement)
-        )
-        if (!fixed.contains('"preLaunchTask"')) {
-            fixed = fixed.replaceAll(
-                '("mainClass":\\s*"[^"]*",)',
-                '$1\n      "preLaunchTask": "classes",'
-            )
-        }
-        if (text != fixed) {
-            launchJson.setText(fixed, 'UTF-8')
+        try {
+            def slurper = new groovy.json.JsonSlurper()
+            def json = slurper.parse(launchJson)
+            def taskMap = [
+                'Client': 'prepareClientRun',
+                'Data': 'prepareDataRun',
+                'GameTestServer': 'prepareGameTestServerRun',
+                'Server': 'prepareServerRun'
+            ]
+            def mainClassesDir = project.file('build/classes/java/main').absolutePath
+            def mainResourcesDir = project.file('build/resources/main').absolutePath
+            def modFolderReplacement = "-Dfml.modFolders=${mod_id}%%${mainClassesDir};${mod_id}%%${mainResourcesDir}"
+            boolean changed = false
+            json.configurations?.each { cfg ->
+                if (taskMap.containsKey(cfg.name)) {
+                    def expectedTask = taskMap[cfg.name]
+                    if (cfg.preLaunchTask != expectedTask) {
+                        cfg.preLaunchTask = expectedTask
+                        changed = true
+                    }
+                }
+                if (cfg.vmArgs instanceof List) {
+                    def newVmArgs = cfg.vmArgs.collect { arg ->
+                        if (arg instanceof String && (arg.contains("bin/main") || arg.contains("bin\\main"))) {
+                            changed = true
+                            return modFolderReplacement
+                        }
+                        return arg
+                    }
+                    cfg.vmArgs = newVmArgs
+                }
+            }
+            if (changed) {
+                launchJson.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(json))
+            }
+        } catch (Exception e) {
+            project.logger.warn("Failed to update .vscode/launch.json: ${e.message}")
         }
     }
 }
