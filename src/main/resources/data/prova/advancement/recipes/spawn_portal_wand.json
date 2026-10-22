@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "prova:spawn_portal_wand"
+      }
+    },
+    "has_phantom_membrane": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:phantom_membrane"
+          }
+        ]
+      }
+    },
+    "has_dragon_breath": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:dragon_breath"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_phantom_membrane",
+      "has_dragon_breath"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "prova:spawn_portal_wand"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": "minecraft:dragon_breath",
+    "M": "minecraft:phantom_membrane",
+    "S": "#c:rods/wooden"
+  },
+  "pattern": [
+    "MDM",
+    " S ",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "prova:spawn_portal_wand"
+  }
+}
