@@ -2,6 +2,7 @@ package com.prova.provamod.client.gui;
 
 import com.prova.provamod.network.SelectPortalMobPayload;
 import com.prova.provamod.network.SetPortalMobFavoritePayload;
+import com.prova.provamod.portal.PortalMobConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -26,11 +27,11 @@ import java.util.Map;
 public class SpawnPortalWandScreen extends Screen {
 
     private static final int ROWS = 2;
-    private static final int CARD_WIDTH = 62;
-    private static final int CARD_HEIGHT = 74;
+    private static final int CARD_WIDTH = 64;
+    private static final int CARD_HEIGHT = 82;
     private static final int CARD_GAP_X = 6;
     private static final int CARD_GAP_Y = 6;
-    private static final int PANEL_HEIGHT = 222;
+    private static final int PANEL_HEIGHT = 236;
 
     private final InteractionHand hand;
     private String selectedMobId;
@@ -94,16 +95,16 @@ public class SpawnPortalWandScreen extends Screen {
 
         int panelPadding = 10;
         this.gridStartX = (this.width - totalGridWidth) / 2;
-        this.gridStartY = panelY0 + 38;
+        this.gridStartY = panelY0 + 36;
         this.panelX0 = gridStartX - panelPadding;
         this.panelX1 = gridStartX + totalGridWidth + panelPadding;
-        this.footerY = panelY0 + 196;
+        this.footerY = panelY0 + 212;
 
         // Search Bar & Favorites Filter Button in header
         int btnFavWidth = 74;
         int searchBoxWidth = totalGridWidth - btnFavWidth - 4;
         int searchBoxX = gridStartX;
-        int searchBoxY = panelY0 + 18;
+        int searchBoxY = panelY0 + 17;
 
         this.searchBox = new EditBox(this.font, searchBoxX, searchBoxY, searchBoxWidth, 16,
                 Component.translatable("gui.prova.spawn_portal_wand.search_hint"));
@@ -262,15 +263,31 @@ public class SpawnPortalWandScreen extends Screen {
             // Show rich tooltip when hovering over a mob card
             if (hoveredEntry != null) {
                 List<Component> tooltipLines = new ArrayList<>();
-                tooltipLines.add(hoveredEntry.displayName());
+                tooltipLines.add(hoveredEntry.displayName().copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
                 tooltipLines.add(Component.literal(hoveredEntry.id()).withStyle(ChatFormatting.DARK_GRAY));
 
                 if (this.favoriteMobIds.contains(hoveredEntry.id())) {
-                    tooltipLines.add(Component.translatable("gui.prova.spawn_portal_wand.is_favorite").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                    tooltipLines.add(Component.translatable("gui.prova.spawn_portal_wand.is_favorite").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
                 }
 
-                tooltipLines.add(Component.translatable("gui.prova.spawn_portal_wand.hint_select").withStyle(ChatFormatting.GRAY));
-                tooltipLines.add(Component.translatable("gui.prova.spawn_portal_wand.hint_favorite").withStyle(ChatFormatting.AQUA));
+                tooltipLines.add(Component.translatable(
+                        "gui.prova.spawn_portal_wand.tooltip_cost",
+                        hoveredEntry.diamondCost()
+                ).withStyle(ChatFormatting.AQUA));
+
+                tooltipLines.add(Component.translatable(
+                        "gui.prova.spawn_portal_wand.tooltip_rate",
+                        String.format(java.util.Locale.ROOT, "%.1f", hoveredEntry.spawnIntervalSeconds()),
+                        PortalMobConfig.getSpeedDescriptor(hoveredEntry.spawnIntervalTicks())
+                ).withStyle(ChatFormatting.GREEN));
+
+                tooltipLines.add(Component.translatable(
+                        "gui.prova.spawn_portal_wand.tooltip_category",
+                        hoveredEntry.categoryName()
+                ).withStyle(ChatFormatting.GRAY));
+
+                tooltipLines.add(Component.translatable("gui.prova.spawn_portal_wand.hint_select").withStyle(ChatFormatting.DARK_AQUA));
+                tooltipLines.add(Component.translatable("gui.prova.spawn_portal_wand.hint_favorite").withStyle(ChatFormatting.LIGHT_PURPLE));
 
                 graphics.setComponentTooltipForNextFrame(
                         this.font,
@@ -288,9 +305,14 @@ public class SpawnPortalWandScreen extends Screen {
         // Render Active Mob and Favorites count in footer
         PortalMobRegistry.MobCardEntry selectedEntry = PortalMobRegistry.getById(this.selectedMobId);
         Component mobName = selectedEntry != null ? selectedEntry.displayName() : Component.literal(this.selectedMobId);
+        int activeCost = selectedEntry != null ? selectedEntry.diamondCost() : PortalMobConfig.getDiamondCost(this.selectedMobId);
+        float activeRate = selectedEntry != null ? selectedEntry.spawnIntervalSeconds() : PortalMobConfig.getSpawnIntervalSeconds(this.selectedMobId);
+
         Component statusText = Component.translatable(
                 "gui.prova.spawn_portal_wand.footer_status",
                 mobName,
+                activeCost,
+                activeRate,
                 favoriteMobIds.size()
         ).withStyle(ChatFormatting.YELLOW);
         graphics.centeredText(this.font, statusText, this.width / 2, footerY + 11, 0xFFFFEE77);
@@ -351,9 +373,9 @@ public class SpawnPortalWandScreen extends Screen {
                 InventoryScreen.extractEntityInInventoryFollowsMouse(
                         graphics,
                         cardX + 2,
-                        cardY + 14,
+                        cardY + 13,
                         cardX + CARD_WIDTH - 2,
-                        cardY + CARD_HEIGHT - 14,
+                        cardY + 54,
                         entry.previewScale(),
                         entry.previewOffsetY(),
                         mouseX,
@@ -362,13 +384,33 @@ public class SpawnPortalWandScreen extends Screen {
                 );
             } catch (Throwable ignored) {
                 graphics.centeredText(this.font, Component.literal("?").withStyle(ChatFormatting.DARK_GRAY),
-                        cardX + CARD_WIDTH / 2, cardY + CARD_HEIGHT / 2 - 4, 0xFF888888);
+                        cardX + CARD_WIDTH / 2, cardY + 30, 0xFF888888);
             }
         }
 
+        // Middle Stat Strip: Diamond Cost & Spawn Rate
+        int statY0 = cardY + 56;
+        int statY1 = cardY + 68;
+        int statX0 = cardX + 3;
+        int statX1 = cardX + CARD_WIDTH - 3;
+
+        graphics.fill(statX0, statY0, statX1, statY1, 0xAA0B0916);
+        graphics.outline(statX0, statY0, statX1 - statX0, statY1 - statY0, 0x44372C4E);
+
+        // Diamond cost on the left
+        String costStr = "◆" + entry.diamondCost();
+        int costColor = PortalMobConfig.getCostColor(entry.diamondCost());
+        graphics.text(this.font, costStr, statX0 + 3, statY0 + 2, costColor);
+
+        // Spawn interval on the right
+        String rateStr = String.format(java.util.Locale.ROOT, "%.1fs", entry.spawnIntervalSeconds());
+        int rateWidth = this.font.width(rateStr);
+        int rateColor = PortalMobConfig.getCadenceColor(entry.spawnIntervalTicks());
+        graphics.text(this.font, rateStr, statX1 - 3 - rateWidth, statY0 + 2, rateColor);
+
         // Bottom Badge: Category or "✓ ATTIVO"
-        int badgeY0 = cardY + CARD_HEIGHT - 12;
-        int badgeY1 = cardY + CARD_HEIGHT - 3;
+        int badgeY0 = cardY + 70;
+        int badgeY1 = cardY + 79;
         int badgeX0 = cardX + 3;
         int badgeX1 = cardX + CARD_WIDTH - 3;
 

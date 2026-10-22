@@ -3,6 +3,7 @@ package com.prova.provamod.item;
 import com.prova.provamod.Prova;
 import com.prova.provamod.client.gui.SpawnPortalWandClientHelper;
 import com.prova.provamod.entity.SpawnPortalEntity;
+import com.prova.provamod.portal.PortalMobConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -30,7 +31,7 @@ import java.util.function.Consumer;
 public class SpawnPortalWandItem extends Item {
 
     public static final double MAX_CAST_DISTANCE = 20.0;
-    public static final int DIAMONDS_REQUIRED = 2;
+    public static final int DEFAULT_DIAMONDS_REQUIRED = 2;
 
     public SpawnPortalWandItem(Properties properties) {
         super(properties);
@@ -66,8 +67,9 @@ public class SpawnPortalWandItem extends Item {
         }
 
         boolean isCreative = player.hasInfiniteMaterials();
+        int diamondCost = PortalMobConfig.getDiamondCost(selectedMob);
 
-        // Check if player has at least 2 diamonds
+        // Check if player has at least diamondCost diamonds
         if (!isCreative) {
             int diamondCount = 0;
             for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
@@ -77,10 +79,10 @@ public class SpawnPortalWandItem extends Item {
                 }
             }
 
-            if (diamondCount < DIAMONDS_REQUIRED) {
+            if (diamondCount < diamondCost) {
                 if (!level.isClientSide()) {
                     player.sendOverlayMessage(
-                            Component.translatable("item.prova.spawn_portal_wand.need_diamonds")
+                            Component.translatable("item.prova.spawn_portal_wand.need_diamonds", diamondCost)
                                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
                     );
                     level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -126,9 +128,9 @@ public class SpawnPortalWandItem extends Item {
         Vec3 portalSpawnPos = new Vec3(targetPos.x, groundBlock.getY() + 2.35, targetPos.z);
 
         if (!level.isClientSide()) {
-            // Consume 2 diamonds
+            // Consume diamonds
             if (!isCreative) {
-                int toConsume = DIAMONDS_REQUIRED;
+                int toConsume = diamondCost;
                 for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
                     ItemStack invStack = player.getInventory().getItem(i);
                     if (invStack.is(Items.DIAMOND)) {
@@ -184,6 +186,13 @@ public class SpawnPortalWandItem extends Item {
             tooltipOutput.accept(
                     Component.translatable("item.prova.spawn_portal_wand.selected", mobName)
                             .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+            );
+
+            int cost = PortalMobConfig.getDiamondCost(selectedMob);
+            float intervalSec = PortalMobConfig.getSpawnIntervalSeconds(selectedMob);
+            tooltipOutput.accept(
+                    Component.translatable("item.prova.spawn_portal_wand.cost_info", cost, String.format(java.util.Locale.ROOT, "%.1f", intervalSec))
+                            .withStyle(ChatFormatting.AQUA)
             );
         } else {
             tooltipOutput.accept(

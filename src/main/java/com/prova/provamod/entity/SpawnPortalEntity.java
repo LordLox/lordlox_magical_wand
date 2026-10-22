@@ -1,5 +1,6 @@
 package com.prova.provamod.entity;
 
+import com.prova.provamod.portal.PortalMobConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -154,7 +155,8 @@ public class SpawnPortalEntity extends Entity implements TraceableEntity {
 
         // Periodic mob summoning on server
         if (!level().isClientSide()) {
-            if (this.tickCount >= INITIAL_DELAY && (this.tickCount - INITIAL_DELAY) % SPAWN_INTERVAL == 0) {
+            int interval = PortalMobConfig.getSpawnInterval(getSelectedMobId());
+            if (this.tickCount >= INITIAL_DELAY && (this.tickCount - INITIAL_DELAY) % interval == 0) {
                 spawnSelectedMob();
             }
         } else {

@@ -119,12 +119,18 @@ public final class ProvaClient {
                 .orElseGet(() -> Component.translatable("entity." + nextMobId.replace(':', '.')))
                 : Component.translatable("entity." + nextMobId.replace(':', '.'));
 
+        int cost = com.prova.provamod.portal.PortalMobConfig.getDiamondCost(nextMobId);
+        float rate = com.prova.provamod.portal.PortalMobConfig.getSpawnIntervalSeconds(nextMobId);
+        Component statBadge = Component.literal(String.format(java.util.Locale.ROOT, " [◆%d | ⏱%.1fs]", cost, rate))
+                .withStyle(ChatFormatting.AQUA);
+
         Component message = Component.translatable(
                 "item.prova.spawn_portal_wand.favorite_selected",
                 mobName,
                 nextIndex + 1,
                 favorites.size()
-        ).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        ).append(statBadge)
+        .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
 
         player.sendOverlayMessage(message);
 

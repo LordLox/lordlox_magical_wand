@@ -1,5 +1,6 @@
 package com.prova.provamod.client.gui;
 
+import com.prova.provamod.portal.PortalMobConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -31,8 +32,14 @@ public class PortalMobRegistry {
             int categoryColor,
             int previewScale,
             float previewOffsetY,
-            int categoryPriority
-    ) {}
+            int categoryPriority,
+            int diamondCost,
+            int spawnIntervalTicks
+    ) {
+        public float spawnIntervalSeconds() {
+            return spawnIntervalTicks / 20.0F;
+        }
+    }
 
     private static final List<MobCardEntry> MOBS = new ArrayList<>();
     private static final Map<String, MobCardEntry> BY_ID = new HashMap<>();
@@ -166,7 +173,8 @@ public class PortalMobRegistry {
             }
         }
 
-        return new MobCardEntry(id, type, displayName, categoryName, categoryColor, scale, offsetY, priority);
+        PortalMobConfig.MobProperty prop = PortalMobConfig.getProperties(id);
+        return new MobCardEntry(id, type, displayName, categoryName, categoryColor, scale, offsetY, priority, prop.diamondCost(), prop.spawnIntervalTicks());
     }
 
     public static List<MobCardEntry> getAll() {

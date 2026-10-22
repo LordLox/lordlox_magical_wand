@@ -54,16 +54,23 @@ public class ModNetworking {
                     .orElseGet(() -> Component.translatable("entity." + payload.mobId().replace(':', '.')))
                     : Component.translatable("entity." + payload.mobId().replace(':', '.'));
 
+            int cost = com.prova.provamod.portal.PortalMobConfig.getDiamondCost(payload.mobId());
+            float rate = com.prova.provamod.portal.PortalMobConfig.getSpawnIntervalSeconds(payload.mobId());
+            Component statBadge = Component.literal(String.format(java.util.Locale.ROOT, " [◆%d | ⏱%.1fs]", cost, rate))
+                    .withStyle(ChatFormatting.AQUA);
+
             List<String> favs = stack.get(Prova.FAVORITE_MOBS.get());
             if (favs != null && favs.contains(payload.mobId())) {
                 int index = favs.indexOf(payload.mobId()) + 1;
                 player.sendOverlayMessage(
                         Component.translatable("item.prova.spawn_portal_wand.favorite_selected", mobName, index, favs.size())
+                                .append(statBadge)
                                 .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
                 );
             } else {
                 player.sendOverlayMessage(
                         Component.translatable("item.prova.spawn_portal_wand.selected", mobName)
+                                .append(statBadge)
                                 .withStyle(ChatFormatting.GREEN)
                 );
             }
