@@ -11,6 +11,7 @@ import com.prova.provamod.item.BlackHoleWandItem;
 import com.prova.provamod.item.GravityWandItem;
 import com.prova.provamod.item.SpawnPortalWandItem;
 import com.prova.provamod.network.ModNetworking;
+import java.util.List;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -45,6 +46,15 @@ public final class Prova {
             () -> DataComponentType.<String>builder()
                     .persistent(Codec.STRING)
                     .networkSynchronized(ByteBufCodecs.STRING_UTF8)
+                    .build()
+    );
+
+    // Data Component for storing favorite mob IDs list
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<String>>> FAVORITE_MOBS = DATA_COMPONENT_TYPES.register(
+            "favorite_mobs",
+            () -> DataComponentType.<List<String>>builder()
+                    .persistent(Codec.STRING.listOf())
+                    .networkSynchronized(ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()))
                     .build()
     );
 

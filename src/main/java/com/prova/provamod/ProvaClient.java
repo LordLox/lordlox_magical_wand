@@ -2,11 +2,27 @@ package com.prova.provamod;
 
 import com.prova.provamod.client.renderer.BlackHoleRenderer;
 import com.prova.provamod.client.renderer.SpawnPortalRenderer;
+import com.prova.provamod.network.SelectPortalMobPayload;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.common.NeoForge;
+
+import java.util.List;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = Prova.MODID, dist = Dist.CLIENT)
@@ -14,6 +30,9 @@ public final class ProvaClient {
     public ProvaClient(IEventBus modEventBus) {
         modEventBus.addListener(this::onClientSetup);
         modEventBus.addListener(this::registerRenderers);
+
+        // Register gameplay input listener on NeoForge game event bus
+        NeoForge.EVENT_BUS.addListener(this::onMouseScroll);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
@@ -23,5 +42,94 @@ public final class ProvaClient {
     private void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Prova.BLACK_HOLE.get(), BlackHoleRenderer::new);
         event.registerEntityRenderer(Prova.SPAWN_PORTAL.get(), SpawnPortalRenderer::new);
+    }
+
+    private void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
+        if (player == null || mc.level == null) {
+            return;
+        }
+
+        // Only handle when no screen is open
+        if (mc.screen != null) {
+            return;
+        }
+
+        // Check if Shift is down
+        boolean isShift = player.isShiftKeyDown() || mc.options.keyShift.isDown();
+        if (!isShift) {
+            return;
+        }
+
+        // Check if player holds the spawn portal wand in either hand
+        InteractionHand hand = InteractionHand.MAIN_HAND;
+        ItemStack stack = player.getMainHandItem();
+        if (!stack.is(Prova.SPAWN_PORTAL_WAND.get())) {
+            if (player.getOffhandItem().is(Prova.SPAWN_PORTAL_WAND.get())) {
+                stack = player.getOffhandItem();
+                hand = InteractionHand.OFF_HAND;
+            } else {
+                return;
+            }
+        }
+
+        double scrollY = event.getScrollDeltaY();
+        if (scrollY == 0) {
+            return;
+        }
+
+        // Intercept scroll: cancel vanilla hotbar slot change!
+        event.setCanceled(true);
+
+        List<String> favorites = stack.get(Prova.FAVORITE_MOBS.get());
+        if (favorites == null || favorites.isEmpty()) {
+            player.sendOverlayMessage(
+                    Component.translatable("item.prova.spawn_portal_wand.no_favorites")
+                            .withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
+            );
+            mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2F));
+            return;
+        }
+
+        String currentMob = stack.get(Prova.SELECTED_MOB.get());
+        int currentIndex = (currentMob != null) ? favorites.indexOf(currentMob) : -1;
+
+        int nextIndex;
+        if (scrollY < 0) {
+            // Scroll down -> next favorite
+            nextIndex = (currentIndex + 1) % favorites.size();
+        } else {
+            // Scroll up -> previous favorite
+            nextIndex = (currentIndex - 1 + favorites.size()) % favorites.size();
+        }
+
+        String nextMobId = favorites.get(nextIndex);
+
+        // Update locally immediately for instant feedback
+        stack.set(Prova.SELECTED_MOB.get(), nextMobId);
+
+        // Sound feedback
+        mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.6F));
+
+        // Display overlay message
+        Identifier id = Identifier.tryParse(nextMobId);
+        Component mobName = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id)
+                .map(type -> type.getDescription())
+                .orElseGet(() -> Component.translatable("entity." + nextMobId.replace(':', '.')))
+                : Component.translatable("entity." + nextMobId.replace(':', '.'));
+
+        Component message = Component.translatable(
+                "item.prova.spawn_portal_wand.favorite_selected",
+                mobName,
+                nextIndex + 1,
+                favorites.size()
+        ).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+
+        player.sendOverlayMessage(message);
+
+        // Send to server
+        int handIdx = (hand == InteractionHand.OFF_HAND) ? 1 : 0;
+        ClientPacketDistributor.sendToServer(new SelectPortalMobPayload(handIdx, nextMobId));
     }
 }

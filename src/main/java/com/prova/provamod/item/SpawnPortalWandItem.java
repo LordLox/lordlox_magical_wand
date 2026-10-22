@@ -24,6 +24,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public class SpawnPortalWandItem extends Item {
@@ -44,7 +45,8 @@ public class SpawnPortalWandItem extends Item {
         if (player.isShiftKeyDown()) {
             if (level.isClientSide()) {
                 String currentMob = itemStack.get(Prova.SELECTED_MOB.get());
-                SpawnPortalWandClientHelper.openScreen(hand, currentMob);
+                List<String> favorites = itemStack.get(Prova.FAVORITE_MOBS.get());
+                SpawnPortalWandClientHelper.openScreen(hand, currentMob, favorites);
             }
             return InteractionResult.SUCCESS;
         }
@@ -166,7 +168,6 @@ public class SpawnPortalWandItem extends Item {
     }
 
     @Override
-    @SuppressWarnings({"deprecation", "null"})
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipOutput, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltipOutput, flag);
 
@@ -189,7 +190,16 @@ public class SpawnPortalWandItem extends Item {
             );
         }
 
+        List<String> favorites = stack.get(Prova.FAVORITE_MOBS.get());
+        if (favorites != null && !favorites.isEmpty()) {
+            tooltipOutput.accept(
+                    Component.translatable("item.prova.spawn_portal_wand.favorites_count", favorites.size())
+                            .withStyle(ChatFormatting.LIGHT_PURPLE)
+            );
+        }
+
         tooltipOutput.accept(Component.translatable("item.prova.spawn_portal_wand.desc1").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
+        tooltipOutput.accept(Component.translatable("item.prova.spawn_portal_wand.desc_scroll").withStyle(ChatFormatting.YELLOW));
         tooltipOutput.accept(Component.translatable("item.prova.spawn_portal_wand.desc2").withStyle(ChatFormatting.AQUA));
         tooltipOutput.accept(Component.translatable("item.prova.spawn_portal_wand.desc3").withStyle(ChatFormatting.DARK_AQUA));
     }

@@ -1,6 +1,10 @@
 package com.prova.provamod.network;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.prova.provamod.Prova;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -23,9 +27,13 @@ public class ModNetworking {
                 SelectPortalMobPayload.STREAM_CODEC,
                 ModNetworking::handleSelectPortalMob
         );
+        registrar.playToServer(
+                SetPortalMobFavoritePayload.TYPE,
+                SetPortalMobFavoritePayload.STREAM_CODEC,
+                ModNetworking::handleSetPortalMobFavorite
+        );
     }
 
-    @SuppressWarnings("null")
     public static void handleSelectPortalMob(SelectPortalMobPayload payload, IPayloadContext context) {
         Player player = context.player();
         if (player == null) {
@@ -46,10 +54,42 @@ public class ModNetworking {
                     .orElseGet(() -> Component.translatable("entity." + payload.mobId().replace(':', '.')))
                     : Component.translatable("entity." + payload.mobId().replace(':', '.'));
 
-            player.sendOverlayMessage(
-                    Component.translatable("item.prova.spawn_portal_wand.selected", mobName)
-                            .withStyle(ChatFormatting.GREEN)
-            );
+            List<String> favs = stack.get(Prova.FAVORITE_MOBS.get());
+            if (favs != null && favs.contains(payload.mobId())) {
+                int index = favs.indexOf(payload.mobId()) + 1;
+                player.sendOverlayMessage(
+                        Component.translatable("item.prova.spawn_portal_wand.favorite_selected", mobName, index, favs.size())
+                                .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                );
+            } else {
+                player.sendOverlayMessage(
+                        Component.translatable("item.prova.spawn_portal_wand.selected", mobName)
+                                .withStyle(ChatFormatting.GREEN)
+                );
+            }
+        }
+    }
+
+    public static void handleSetPortalMobFavorite(SetPortalMobFavoritePayload payload, IPayloadContext context) {
+        Player player = context.player();
+        if (player == null) {
+            return;
+        }
+
+        InteractionHand hand = payload.handIndex() == 1 ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        ItemStack stack = player.getItemInHand(hand);
+
+        if (stack.is(Prova.SPAWN_PORTAL_WAND.get())) {
+            List<String> current = stack.get(Prova.FAVORITE_MOBS.get());
+            List<String> updated = current != null ? new ArrayList<>(current) : new ArrayList<>();
+            if (payload.isFavorite()) {
+                if (!updated.contains(payload.mobId())) {
+                    updated.add(payload.mobId());
+                }
+            } else {
+                updated.remove(payload.mobId());
+            }
+            stack.set(Prova.FAVORITE_MOBS.get(), List.copyOf(updated));
         }
     }
 }
