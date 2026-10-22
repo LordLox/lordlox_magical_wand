@@ -93,7 +93,7 @@ public final class Prova {
     public static final DeferredHolder<EntityType<?>, EntityType<SpawnPortalEntity>> SPAWN_PORTAL = ENTITIES.register(
             "spawn_portal",
             () -> EntityType.Builder.<SpawnPortalEntity>of(SpawnPortalEntity::new, MobCategory.MISC)
-                    .sized(1.5F, 1.5F)
+                    .sized(2.5F, 2.8F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(MODID, "spawn_portal")))

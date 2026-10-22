@@ -122,7 +122,8 @@ public class SpawnPortalWandItem extends Item {
             groundBlock = targetBlock;
         }
 
-        Vec3 portalSpawnPos = new Vec3(targetPos.x, groundBlock.getY() + 2.3, targetPos.z);
+        // Position vertical portal so its base (radius 1.35) rests right at ground level (+1.0)
+        Vec3 portalSpawnPos = new Vec3(targetPos.x, groundBlock.getY() + 2.35, targetPos.z);
 
         if (!level.isClientSide()) {
             // Consume 2 diamonds
@@ -141,9 +142,10 @@ public class SpawnPortalWandItem extends Item {
                 }
             }
 
-            // Spawn portal entity
+            // Spawn portal entity facing the cast direction
             SpawnPortalEntity portal = new SpawnPortalEntity(Prova.SPAWN_PORTAL.get(), level);
             portal.setPos(portalSpawnPos.x, portalSpawnPos.y, portalSpawnPos.z);
+            portal.setPortalYaw(player.getYRot());
             portal.setOwner(player);
             portal.setSelectedMobId(selectedMob);
             level.addFreshEntity(portal);
