@@ -11,15 +11,6 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "block": "prova:wand_workbench",
-              "condition": "minecraft:block_state_property",
-              "properties": {
-                "part": "left"
-              }
-            }
-          ],
           "name": "prova:wand_workbench"
         }
       ],

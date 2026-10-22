@@ -96,15 +96,17 @@ public class WandWorkbenchBlock extends HorizontalDirectionalBlock {
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide() && player.preventsBlockDrops()) {
+        if (!level.isClientSide()) {
             WandWorkbenchPart part = state.getValue(PART);
-            if (part == WandWorkbenchPart.LEFT) {
-                BlockPos rightPos = pos.relative(getNeighbourDirection(part, state.getValue(FACING)));
-                BlockState rightState = level.getBlockState(rightPos);
-                if (rightState.is(this) && rightState.getValue(PART) == WandWorkbenchPart.RIGHT) {
-                    level.setBlock(rightPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_KNOWN_SHAPE);
-                    level.levelEvent(player, 2001, rightPos, Block.getId(rightState));
-                }
+            Direction facing = state.getValue(FACING);
+            BlockPos otherPos = pos.relative(getNeighbourDirection(part, facing));
+            BlockState otherState = level.getBlockState(otherPos);
+            WandWorkbenchPart expectedOtherPart = (part == WandWorkbenchPart.LEFT) ? WandWorkbenchPart.RIGHT : WandWorkbenchPart.LEFT;
+
+            if (otherState.is(this) && otherState.getValue(FACING) == facing && otherState.getValue(PART) == expectedOtherPart) {
+                // Clear the other half on both server and client (UPDATE_ALL), suppressing duplicate drops
+                level.setBlock(otherPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+                level.levelEvent(player, 2001, otherPos, Block.getId(otherState));
             }
         }
         return super.playerWillDestroy(level, pos, state, player);
