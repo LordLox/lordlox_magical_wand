@@ -128,7 +128,9 @@ public class ModNetworking {
 
     public static void handleRollD20(RollD20Payload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
-            com.prova.provamod.client.gui.GamblingWandClientHelper.triggerRollOverlay(payload.rollResult(), payload.betAmount());
+            com.prova.provamod.client.gui.GamblingWandClientHelper.triggerRollOverlay(
+                    payload.rollResult(), payload.betAmount(), payload.rewardDescription()
+            );
         });
     }
 }

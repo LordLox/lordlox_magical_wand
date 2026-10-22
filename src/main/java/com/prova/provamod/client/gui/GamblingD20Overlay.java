@@ -26,14 +26,16 @@ public class GamblingD20Overlay {
     private static boolean isActive = false;
     private static int targetRoll = 10;
     private static int betAmount = 0;
+    private static Component rewardDescription = null;
     private static long startNanoTime = 0;
     private static long lastCycleMs = 0;
     private static int currentCyclingNumber = 10;
     private static boolean playedClimaxSound = false;
 
-    public static void startRoll(int rollResult, int bet) {
+    public static void startRoll(int rollResult, int bet, Component rewardDesc) {
         targetRoll = rollResult;
         betAmount = bet;
+        rewardDescription = rewardDesc;
         startNanoTime = System.nanoTime();
         lastCycleMs = 0;
         currentCyclingNumber = 1 + RANDOM.nextInt(20);
@@ -57,8 +59,21 @@ public class GamblingD20Overlay {
         int screenW = mc.getWindow().getGuiScaledWidth();
         int screenH = mc.getWindow().getGuiScaledHeight();
 
-        // Overlay card dimensions & positioning
-        int cardW = 180;
+        boolean isRolling = elapsedMs < ROLL_DURATION_MS;
+
+        Component header = isRolling
+                ? Component.translatable("overlay.prova.gambling.rolling")
+                        .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                        .append(Component.literal(" ◆" + betAmount).withStyle(ChatFormatting.AQUA))
+                : getResultHeader(targetRoll);
+
+        Component footer = isRolling
+                ? Component.translatable("item.prova.gambling_wand.desc1").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC)
+                : (rewardDescription != null ? rewardDescription : getResultDescription(targetRoll));
+
+        // Overlay card dimensions & positioning - adaptive width to fit reward text without clipping
+        int contentWidth = Math.max(font.width(header), font.width(footer));
+        int cardW = Math.max(220, contentWidth + 24);
         int cardH = 92;
         int centerX = screenW / 2;
         int cardY0 = Math.max(16, screenH / 5);
@@ -85,8 +100,6 @@ public class GamblingD20Overlay {
         graphics.outline(cardX0, cardY0, cardW, cardH, borderCol);
         graphics.outline(cardX0 + 1, cardY0 + 1, cardW - 2, cardH - 2, innerBorderCol);
 
-        boolean isRolling = elapsedMs < ROLL_DURATION_MS;
-
         if (isRolling) {
             // Decelerating cycle interval
             float progress = (float) elapsedMs / ROLL_DURATION_MS;
@@ -98,10 +111,6 @@ public class GamblingD20Overlay {
                 mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.4F + RANDOM.nextFloat() * 0.4F));
             }
 
-            // Header text
-            Component header = Component.translatable("overlay.prova.gambling.rolling")
-                    .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-                    .append(Component.literal(" ◆" + betAmount).withStyle(ChatFormatting.AQUA));
             graphics.centeredText(font, header, centerX, cardY0 + 8, 0xFFFFD700);
 
             // D20 Graphic & Number in center
@@ -114,8 +123,6 @@ public class GamblingD20Overlay {
                     .withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
             graphics.centeredText(font, numText, centerX, dieY + 18, 0xFFFFFF55);
 
-            // Footer hint
-            Component footer = Component.translatable("item.prova.gambling_wand.desc1").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
             graphics.centeredText(font, footer, centerX, cardY1 - 14, 0xFFAAAAAA);
 
         } else {
@@ -125,8 +132,6 @@ public class GamblingD20Overlay {
                 playResultSound(mc, targetRoll);
             }
 
-            // Header banner
-            Component header = getResultHeader(targetRoll);
             graphics.centeredText(font, header, centerX, cardY0 + 8, 0xFFFFFFFF);
 
             // D20 Graphic & Number
@@ -138,8 +143,7 @@ public class GamblingD20Overlay {
             Component numText = getResultNumberText(targetRoll);
             graphics.centeredText(font, numText, centerX, dieY + 18, 0xFFFFFFFF);
 
-            // Footer reward description
-            Component footer = getResultDescription(targetRoll);
+            // Footer reward description stating what was actually obtained
             graphics.centeredText(font, footer, centerX, cardY1 - 14, 0xFFFFFFFF);
         }
     }
@@ -187,17 +191,17 @@ public class GamblingD20Overlay {
 
     private static Component getResultDescription(int roll) {
         if (roll == 20) {
-            return Component.literal("64x Diamanti! JACKPOT!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+            return Component.literal("Ottenuto: 64x Diamanti (JACKPOT!)").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
         } else if (roll >= 16) {
-            return Component.literal("Diamanti, Oro, Redstone e Lapis!").withStyle(ChatFormatting.AQUA);
+            return Component.literal("Ottenuto: Minerali Rari").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
         } else if (roll >= 11) {
-            return Component.literal("Carbone, Ferro e Rame!").withStyle(ChatFormatting.YELLOW);
+            return Component.literal("Ottenuto: Minerali Comuni").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
         } else if (roll >= 8) {
-            return Component.literal("Mob pacifici evocati!").withStyle(ChatFormatting.GREEN);
+            return Component.literal("Evocate Creature pacifiche!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD);
         } else if (roll >= 2) {
-            return Component.literal("Mob ostili in arrivo!").withStyle(ChatFormatting.RED);
+            return Component.literal("Evocati Mostri ostili!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
         } else {
-            return Component.literal("Sei morto istantaneamente!").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD);
+            return Component.literal("Nessuna vincita: Morte istantanea!").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD);
         }
     }
 

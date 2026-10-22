@@ -119,11 +119,14 @@ public class GamblingWandItem extends Item {
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.9F, 1.3F);
 
+        // Prepare outcome: generates exact drops/mobs and localized description
+        GamblingRollManager.RollPreparation prep = GamblingRollManager.prepareRoll(serverPlayer.level(), roll, bet);
+
         // Schedule outcome: triggers after 40 ticks (~2.0 seconds)
-        GamblingRollManager.startRoll(serverPlayer, roll, bet, 40);
+        GamblingRollManager.startRoll(serverPlayer, prep, 40);
 
         // Send roll packet to client for animated overlay
-        PacketDistributor.sendToPlayer(serverPlayer, new RollD20Payload(roll, bet));
+        PacketDistributor.sendToPlayer(serverPlayer, new RollD20Payload(roll, bet, prep.rewardDescription()));
 
         player.swing(hand);
         return InteractionResult.SUCCESS;

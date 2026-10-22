@@ -1,6 +1,7 @@
 package com.prova.provamod.client.gui;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 
 public class GamblingWandClientHelper {
@@ -10,7 +11,7 @@ public class GamblingWandClientHelper {
         mc.setScreen(new GamblingWandScreen(hand, currentBet));
     }
 
-    public static void triggerRollOverlay(int rollResult, int betAmount) {
-        GamblingD20Overlay.startRoll(rollResult, betAmount);
+    public static void triggerRollOverlay(int rollResult, int betAmount, Component rewardDescription) {
+        GamblingD20Overlay.startRoll(rollResult, betAmount, rewardDescription);
     }
 }

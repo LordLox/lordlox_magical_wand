@@ -1,9 +1,15 @@
 package com.prova.provamod.gambling;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,29 +21,31 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
-
 public class GamblingRollManager {
+
+    public record RollPreparation(int rollResult, int betAmount, Component rewardDescription, List<ItemStack> drops, int mobCount) {}
 
     public static class ActiveRoll {
         public final UUID playerId;
         public final int rollResult;
         public final int betAmount;
         public int remainingTicks;
+        public final List<ItemStack> preparedDrops;
+        public final int mobCount;
 
-        public ActiveRoll(UUID playerId, int rollResult, int betAmount, int remainingTicks) {
+        public ActiveRoll(UUID playerId, int rollResult, int betAmount, int remainingTicks, List<ItemStack> preparedDrops, int mobCount) {
             this.playerId = playerId;
             this.rollResult = rollResult;
             this.betAmount = betAmount;
             this.remainingTicks = remainingTicks;
+            this.preparedDrops = preparedDrops != null ? preparedDrops : List.of();
+            this.mobCount = mobCount;
         }
     }
 
@@ -74,8 +82,84 @@ public class GamblingRollManager {
             EntityType.VILLAGER
     );
 
-    public static void startRoll(ServerPlayer player, int rollResult, int betAmount, int durationTicks) {
-        ACTIVE_ROLLS.add(new ActiveRoll(player.getUUID(), rollResult, betAmount, durationTicks));
+    private record MineralDrop(Item item, int minCount, int maxCount) {
+        public ItemStack createStack(ServerLevel level) {
+            int count = minCount + level.getRandom().nextInt(maxCount - minCount + 1);
+            return new ItemStack(item, count);
+        }
+    }
+
+    private static final List<MineralDrop> COMMON_MINERAL_DROPS = List.of(
+            new MineralDrop(Items.COAL, 6, 14),
+            new MineralDrop(Items.RAW_IRON, 2, 7),
+            new MineralDrop(Items.RAW_COPPER, 3, 10),
+            new MineralDrop(Items.IRON_INGOT, 2, 4),
+            new MineralDrop(Items.COPPER_INGOT, 2, 5)
+    );
+
+    private static final List<MineralDrop> RARE_MINERAL_DROPS = List.of(
+            new MineralDrop(Items.RAW_GOLD, 3, 10),
+            new MineralDrop(Items.GOLD_INGOT, 2, 5),
+            new MineralDrop(Items.REDSTONE, 4, 12),
+            new MineralDrop(Items.LAPIS_LAZULI, 4, 12),
+            new MineralDrop(Items.DIAMOND, 1, 4),
+            new MineralDrop(Items.EMERALD, 1, 4)
+    );
+
+    private static List<ItemStack> pickRandomDrops(ServerLevel level, List<MineralDrop> pool, int typeCount) {
+        List<MineralDrop> available = new ArrayList<>(pool);
+        List<ItemStack> result = new ArrayList<>();
+        int countToPick = Math.min(typeCount, available.size());
+        for (int i = 0; i < countToPick; i++) {
+            int index = level.getRandom().nextInt(available.size());
+            MineralDrop drop = available.remove(index);
+            result.add(drop.createStack(level));
+        }
+        return result;
+    }
+
+    public static Component formatItemDropsDescription(List<ItemStack> drops, ChatFormatting prefixColor, ChatFormatting itemColor) {
+        MutableComponent comp = Component.literal("Ottenuto: ").withStyle(prefixColor, ChatFormatting.BOLD);
+        for (int i = 0; i < drops.size(); i++) {
+            ItemStack stack = drops.get(i);
+            if (i > 0) {
+                comp.append(Component.literal(" + ").withStyle(ChatFormatting.GRAY));
+            }
+            comp.append(Component.literal(stack.getCount() + "x ").withStyle(ChatFormatting.WHITE));
+            comp.append(stack.getHoverName().copy().withStyle(itemColor));
+        }
+        return comp;
+    }
+
+    public static RollPreparation prepareRoll(ServerLevel level, int rollResult, int betAmount) {
+        Component description;
+        List<ItemStack> drops = List.of();
+        int mobCount = 0;
+
+        if (rollResult == 1) {
+            description = Component.literal("Nessuna vincita: Morte istantanea!").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD);
+        } else if (rollResult >= 2 && rollResult <= 7) {
+            mobCount = 2 + level.getRandom().nextInt(4); // 2 to 5
+            description = Component.literal("Evocati: " + mobCount + " Mostri aggressivi!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+        } else if (rollResult >= 8 && rollResult <= 10) {
+            mobCount = 2 + level.getRandom().nextInt(4); // 2 to 5
+            description = Component.literal("Evocate: " + mobCount + " Creature pacifiche!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD);
+        } else if (rollResult >= 11 && rollResult <= 15) {
+            drops = pickRandomDrops(level, COMMON_MINERAL_DROPS, 2);
+            description = formatItemDropsDescription(drops, ChatFormatting.YELLOW, ChatFormatting.YELLOW);
+        } else if (rollResult >= 16 && rollResult <= 19) {
+            drops = pickRandomDrops(level, RARE_MINERAL_DROPS, 2);
+            description = formatItemDropsDescription(drops, ChatFormatting.AQUA, ChatFormatting.AQUA);
+        } else { // 20
+            drops = List.of(new ItemStack(Items.DIAMOND, 64));
+            description = Component.literal("Ottenuto: 64x Diamanti (JACKPOT!)").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        }
+
+        return new RollPreparation(rollResult, betAmount, description, drops, mobCount);
+    }
+
+    public static void startRoll(ServerPlayer player, RollPreparation prep, int durationTicks) {
+        ACTIVE_ROLLS.add(new ActiveRoll(player.getUUID(), prep.rollResult(), prep.betAmount(), durationTicks, prep.drops(), prep.mobCount()));
     }
 
     public static boolean isPlayerRolling(UUID playerId) {
@@ -103,14 +187,15 @@ public class GamblingRollManager {
                 iterator.remove();
                 ServerPlayer player = server.getPlayerList().getPlayer(roll.playerId);
                 if (player != null && player.isAlive()) {
-                    executeOutcome(player, roll.rollResult, roll.betAmount);
+                    executeOutcome(player, roll);
                 }
             }
         }
     }
 
-    public static void executeOutcome(ServerPlayer player, int rollResult, int betAmount) {
+    public static void executeOutcome(ServerPlayer player, ActiveRoll roll) {
         ServerLevel level = player.level();
+        int rollResult = roll.rollResult;
 
         if (rollResult == 1) {
             // 1: muori
@@ -131,7 +216,7 @@ public class GamblingRollManager {
             player.kill(level);
         } else if (rollResult >= 2 && rollResult <= 7) {
             // 2-7: spawnano da 2 a 5 mob aggressivi casuali non boss
-            int count = 2 + level.getRandom().nextInt(4); // 2 to 5
+            int count = roll.mobCount;
             for (int i = 0; i < count; i++) {
                 EntityType<?> type = HOSTILE_MOBS.get(level.getRandom().nextInt(HOSTILE_MOBS.size()));
                 double angle = (2 * Math.PI * i / count) + (level.getRandom().nextDouble() * 0.4 - 0.2);
@@ -157,7 +242,7 @@ public class GamblingRollManager {
             player.sendOverlayMessage(Component.translatable("item.prova.gambling_wand.result.hostile_mobs", count).withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
         } else if (rollResult >= 8 && rollResult <= 10) {
             // 8-10: spawnano da 2 a 5 mob passivi casuali
-            int count = 2 + level.getRandom().nextInt(4); // 2 to 5
+            int count = roll.mobCount;
             for (int i = 0; i < count; i++) {
                 EntityType<?> type = PASSIVE_MOBS.get(level.getRandom().nextInt(PASSIVE_MOBS.size()));
                 double angle = (2 * Math.PI * i / count) + (level.getRandom().nextDouble() * 0.4 - 0.2);
@@ -178,37 +263,20 @@ public class GamblingRollManager {
             level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.NEUTRAL, 1.2F, 1.0F);
             player.sendOverlayMessage(Component.translatable("item.prova.gambling_wand.result.passive_mobs", count).withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
         } else if (rollResult >= 11 && rollResult <= 15) {
-            // 11-15: spawnano alcuni minerali comuni, come ferro, coal e copper
-            List<ItemStack> drops = List.of(
-                    new ItemStack(Items.COAL, 8 + level.getRandom().nextInt(9)),
-                    new ItemStack(Items.RAW_IRON, 6 + level.getRandom().nextInt(7)),
-                    new ItemStack(Items.RAW_COPPER, 8 + level.getRandom().nextInt(9)),
-                    new ItemStack(Items.IRON_INGOT, 2 + level.getRandom().nextInt(4)),
-                    new ItemStack(Items.COPPER_INGOT, 2 + level.getRandom().nextInt(4))
-            );
-
-            for (ItemStack drop : drops) {
-                ItemEntity itemEntity = new ItemEntity(level, player.getX(), player.getY() + 0.8, player.getZ(), drop);
+            // 11-15: spawnano i minerali comuni preparati
+            for (ItemStack drop : roll.preparedDrops) {
+                ItemEntity itemEntity = new ItemEntity(level, player.getX(), player.getY() + 0.8, player.getZ(), drop.copy());
                 itemEntity.setDeltaMovement((level.getRandom().nextDouble() - 0.5) * 0.3, 0.35, (level.getRandom().nextDouble() - 0.5) * 0.3);
                 level.addFreshEntity(itemEntity);
             }
 
             level.sendParticles(ParticleTypes.HAPPY_VILLAGER, player.getX(), player.getY() + 1.0, player.getZ(), 20, 0.5, 0.5, 0.5, 0.0);
             level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0F, 1.0F);
-            player.sendOverlayMessage(Component.translatable("item.prova.gambling_wand.result.common_minerals").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
+            player.sendOverlayMessage(formatItemDropsDescription(roll.preparedDrops, ChatFormatting.YELLOW, ChatFormatting.YELLOW));
         } else if (rollResult >= 16 && rollResult <= 19) {
-            // 16-19: spawnano alcuni minerali rari come gold, redstone, lapis e diamanti
-            List<ItemStack> drops = List.of(
-                    new ItemStack(Items.RAW_GOLD, 6 + level.getRandom().nextInt(7)),
-                    new ItemStack(Items.GOLD_INGOT, 4 + level.getRandom().nextInt(5)),
-                    new ItemStack(Items.REDSTONE, 12 + level.getRandom().nextInt(13)),
-                    new ItemStack(Items.LAPIS_LAZULI, 12 + level.getRandom().nextInt(13)),
-                    new ItemStack(Items.DIAMOND, 3 + level.getRandom().nextInt(5)),
-                    new ItemStack(Items.EMERALD, 2 + level.getRandom().nextInt(4))
-            );
-
-            for (ItemStack drop : drops) {
-                ItemEntity itemEntity = new ItemEntity(level, player.getX(), player.getY() + 0.8, player.getZ(), drop);
+            // 16-19: spawnano i minerali rari preparati
+            for (ItemStack drop : roll.preparedDrops) {
+                ItemEntity itemEntity = new ItemEntity(level, player.getX(), player.getY() + 0.8, player.getZ(), drop.copy());
                 itemEntity.setDeltaMovement((level.getRandom().nextDouble() - 0.5) * 0.35, 0.4, (level.getRandom().nextDouble() - 0.5) * 0.35);
                 level.addFreshEntity(itemEntity);
             }
@@ -216,7 +284,7 @@ public class GamblingRollManager {
             level.sendParticles(ParticleTypes.ENCHANTED_HIT, player.getX(), player.getY() + 1.0, player.getZ(), 35, 0.6, 0.6, 0.6, 0.1);
             level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.2F, 1.1F);
             level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.3F);
-            player.sendOverlayMessage(Component.translatable("item.prova.gambling_wand.result.rare_minerals").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+            player.sendOverlayMessage(formatItemDropsDescription(roll.preparedDrops, ChatFormatting.AQUA, ChatFormatting.AQUA));
         } else if (rollResult == 20) {
             // 20: spawnano uno stack di diamanti (64x)
             ItemEntity diamondStack = new ItemEntity(level, player.getX(), player.getY() + 0.8, player.getZ(), new ItemStack(Items.DIAMOND, 64));
