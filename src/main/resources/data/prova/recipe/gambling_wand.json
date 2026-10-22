@@ -2,14 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
-    "D": "minecraft:diamond",
-    "G": "minecraft:gold_ingot",
-    "S": "#c:rods/wooden"
+    "g": "minecraft:gold_ingot",
+    "o": "minecraft:diamond",
+    "p": "minecraft:phantom_membrane",
+    "s": "#c:rods/wooden"
   },
   "pattern": [
-    "GDG",
-    " S ",
-    " S "
+    "pooop",
+    "pgsgp",
+    " gsg ",
+    " gsg ",
+    " gsg "
   ],
   "result": {
     "count": 1,

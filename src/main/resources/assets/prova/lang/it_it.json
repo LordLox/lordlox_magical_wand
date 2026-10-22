@@ -75,5 +75,7 @@
   "gui.prova.gambling_wand.confirm": "Conferma Scommessa",
   "gui.prova.gambling_wand.btn_max": "MAX",
   "overlay.prova.gambling.rolling": "LANCIO D20 IN CORSO...",
-  "overlay.prova.gambling.bet_badge": "◆ Scommessa: %d Diamanti"
+  "overlay.prova.gambling.bet_badge": "◆ Scommessa: %d Diamanti",
+  "block.prova.wand_workbench": "Banco da Lavoro per Bacchette",
+  "container.prova.wand_workbench": "Banco da Lavoro per Bacchette"
 }

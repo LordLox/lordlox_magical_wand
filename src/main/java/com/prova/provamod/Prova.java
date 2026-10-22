@@ -118,12 +118,31 @@ public final class Prova {
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(MODID, "spawn_portal")))
     );
 
+    public static final DeferredRegister<net.minecraft.world.inventory.MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, MODID);
+
+    // Wand Workbench Block
+    public static final net.neoforged.neoforge.registries.DeferredBlock<com.prova.provamod.block.WandWorkbenchBlock> WAND_WORKBENCH = BLOCKS.registerBlock(
+            "wand_workbench",
+            com.prova.provamod.block.WandWorkbenchBlock::new,
+            p -> p.strength(2.5F).sound(net.minecraft.world.level.block.SoundType.WOOD)
+    );
+
+    // Wand Workbench BlockItem
+    public static final DeferredItem<net.minecraft.world.item.BlockItem> WAND_WORKBENCH_ITEM = ITEMS.registerSimpleBlockItem(WAND_WORKBENCH);
+
+    // Wand Workbench MenuType
+    public static final DeferredHolder<net.minecraft.world.inventory.MenuType<?>, net.minecraft.world.inventory.MenuType<com.prova.provamod.world.inventory.WandWorkbenchMenu>> WAND_WORKBENCH_MENU = MENUS.register(
+            "wand_workbench",
+            () -> new net.minecraft.world.inventory.MenuType<>(com.prova.provamod.world.inventory.WandWorkbenchMenu::new, net.minecraft.world.flag.FeatureFlags.VANILLA_SET)
+    );
+
     // Creative Tab for Prova mod items
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PROVA_TAB = CREATIVE_MODE_TABS.register("prova_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.prova"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> SPAWN_PORTAL_WAND.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
+                output.accept(WAND_WORKBENCH_ITEM.get());
                 output.accept(GRAVITY_WAND.get());
                 output.accept(BLACK_HOLE_WAND.get());
                 output.accept(SPAWN_PORTAL_WAND.get());
@@ -132,8 +151,12 @@ public final class Prova {
             .build());
 
     public Prova(IEventBus modEventBus) {
+        // Expand crafting recipe pattern limits to 5x5 for Wand Workbench recipes
+        net.minecraft.world.item.crafting.ShapedRecipePattern.setCraftingSize(5, 5);
+
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
+        MENUS.register(modEventBus);
         ENTITIES.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         DATA_COMPONENT_TYPES.register(modEventBus);

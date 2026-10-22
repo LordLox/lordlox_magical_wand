@@ -2,14 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
-    "A": "minecraft:amethyst_shard",
-    "M": "minecraft:phantom_membrane",
-    "S": "#c:rods/wooden"
+    "g": "minecraft:gold_ingot",
+    "o": "minecraft:amethyst_shard",
+    "p": "minecraft:phantom_membrane",
+    "s": "#c:rods/wooden"
   },
   "pattern": [
-    "MAM",
-    " S ",
-    " S "
+    "pooop",
+    "pgsgp",
+    " gsg ",
+    " gsg ",
+    " gsg "
   ],
   "result": {
     "count": 1,

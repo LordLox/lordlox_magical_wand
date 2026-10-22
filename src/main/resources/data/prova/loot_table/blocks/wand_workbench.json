@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "block": "prova:wand_workbench",
+              "condition": "minecraft:block_state_property",
+              "properties": {
+                "part": "left"
+              }
+            }
+          ],
+          "name": "prova:wand_workbench"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ]
+}

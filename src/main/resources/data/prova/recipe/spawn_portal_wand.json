@@ -2,14 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
-    "D": "minecraft:dragon_breath",
-    "M": "minecraft:phantom_membrane",
-    "S": "#c:rods/wooden"
+    "g": "minecraft:gold_ingot",
+    "o": "minecraft:dragon_breath",
+    "p": "minecraft:phantom_membrane",
+    "s": "#c:rods/wooden"
   },
   "pattern": [
-    "MDM",
-    " S ",
-    " S "
+    "pooop",
+    "pgsgp",
+    " gsg ",
+    " gsg ",
+    " gsg "
   ],
   "result": {
     "count": 1,

@@ -75,6 +75,8 @@
   "gui.prova.gambling_wand.confirm": "Confirm Wager",
   "gui.prova.gambling_wand.btn_max": "MAX",
   "overlay.prova.gambling.rolling": "ROLLING D20...",
-  "overlay.prova.gambling.bet_badge": "◆ Wager: %d Diamonds"
+  "overlay.prova.gambling.bet_badge": "◆ Wager: %d Diamonds",
+  "block.prova.wand_workbench": "Wand Workbench",
+  "container.prova.wand_workbench": "Wand Workbench"
 }
 

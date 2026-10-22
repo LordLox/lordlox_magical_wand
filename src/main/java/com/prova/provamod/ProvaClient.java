@@ -35,9 +35,14 @@ public final class ProvaClient {
         modEventBus.addListener(this::onClientSetup);
         modEventBus.addListener(this::registerRenderers);
         modEventBus.addListener(this::registerGuiLayers);
+        modEventBus.addListener(this::registerMenuScreens);
 
         // Register gameplay input listener on NeoForge game event bus
         NeoForge.EVENT_BUS.addListener(this::onMouseScroll);
+    }
+
+    private void registerMenuScreens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
+        event.register(Prova.WAND_WORKBENCH_MENU.get(), com.prova.provamod.client.gui.WandWorkbenchScreen::new);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {

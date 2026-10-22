@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "prova:block/wand_workbench_bottom",
+    "east": "prova:block/wand_workbench_side_inner",
+    "north": "prova:block/wand_workbench_front_right",
+    "particle": "prova:block/wand_workbench_front_right",
+    "south": "prova:block/wand_workbench_back",
+    "up": "prova:block/wand_workbench_top_right",
+    "west": "prova:block/wand_workbench_side_outer"
+  }
+}
