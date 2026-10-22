@@ -117,7 +117,7 @@ public class GamblingD20Overlay {
             int dieSize = 44;
             int dieX = centerX - dieSize / 2;
             int dieY = cardY0 + 22;
-            graphics.blit(D20_TEXTURE, dieX, dieY, dieSize, dieSize, 0.0F, 0.0F, 1.0F, 1.0F);
+            graphics.blit(D20_TEXTURE, dieX, dieY, dieX + dieSize, dieY + dieSize, 0.0F, 1.0F, 0.0F, 1.0F);
 
             Component numText = Component.literal(String.valueOf(currentCyclingNumber))
                     .withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
@@ -138,7 +138,7 @@ public class GamblingD20Overlay {
             int dieSize = 44;
             int dieX = centerX - dieSize / 2;
             int dieY = cardY0 + 22;
-            graphics.blit(D20_TEXTURE, dieX, dieY, dieSize, dieSize, 0.0F, 0.0F, 1.0F, 1.0F);
+            graphics.blit(D20_TEXTURE, dieX, dieY, dieX + dieSize, dieY + dieSize, 0.0F, 1.0F, 0.0F, 1.0F);
 
             Component numText = getResultNumberText(targetRoll);
             graphics.centeredText(font, numText, centerX, dieY + 18, 0xFFFFFFFF);
