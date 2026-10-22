@@ -2,6 +2,7 @@ package com.prova.provamod.entity;
 
 import com.prova.provamod.portal.PortalMobConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.Packet;
@@ -171,7 +172,6 @@ public class SpawnPortalEntity extends Entity implements TraceableEntity {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private void spawnSelectedMob() {
         if (!(level() instanceof ServerLevel serverLevel)) {
             return;
@@ -211,7 +211,7 @@ public class SpawnPortalEntity extends Entity implements TraceableEntity {
         for (int dy = 0; dy <= 5; dy++) {
             BlockPos check = checkStart.below(dy);
             var blockState = serverLevel.getBlockState(check);
-            if (!blockState.isAir() && blockState.blocksMotion()) {
+            if (!blockState.isAir() && (!blockState.getCollisionShape(serverLevel, check).isEmpty() || blockState.isFaceSturdy(serverLevel, check, Direction.UP))) {
                 spawnY = check.getY() + 1.0;
                 break;
             }
@@ -228,7 +228,7 @@ public class SpawnPortalEntity extends Entity implements TraceableEntity {
         spawnedEntity.setYBodyRot(portalYaw);
 
         if (spawnedEntity instanceof Mob mob) {
-            mob.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(BlockPos.containing(spawnX, spawnY, spawnZ)), EntitySpawnReason.SPAWNER, null);
+            net.neoforged.neoforge.event.EventHooks.finalizeMobSpawn(mob, serverLevel, serverLevel.getCurrentDifficultyAt(BlockPos.containing(spawnX, spawnY, spawnZ)), EntitySpawnReason.SPAWNER, null);
             // Give mob forward impulse out of the portal
             double forwardSpeed = 0.28;
             mob.setDeltaMovement(Fx * forwardSpeed, 0.12, Fz * forwardSpeed);

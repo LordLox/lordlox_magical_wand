@@ -12,7 +12,6 @@ public record SetPortalMobFavoritePayload(int handIndex, String mobId, boolean i
     public static final CustomPacketPayload.Type<SetPortalMobFavoritePayload> TYPE =
             new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(Prova.MODID, "set_portal_mob_favorite"));
 
-    @SuppressWarnings("null")
     public static final StreamCodec<FriendlyByteBuf, SetPortalMobFavoritePayload> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, SetPortalMobFavoritePayload::handIndex,

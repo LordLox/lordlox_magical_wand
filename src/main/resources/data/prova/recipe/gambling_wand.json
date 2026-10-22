@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": "minecraft:diamond",
+    "G": "minecraft:gold_ingot",
+    "S": "#c:rods/wooden"
+  },
+  "pattern": [
+    "GDG",
+    " S ",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "prova:gambling_wand"
+  }
+}

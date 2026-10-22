@@ -88,7 +88,6 @@ public class BlackHoleWandItem extends Item {
     @Override
     @SuppressWarnings("deprecation")
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipOutput, TooltipFlag flag) {
-        super.appendHoverText(stack, context, display, tooltipOutput, flag);
         tooltipOutput.accept(Component.translatable("item.prova.black_hole_wand.desc1").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
         tooltipOutput.accept(Component.translatable("item.prova.black_hole_wand.desc2").withStyle(ChatFormatting.GRAY));
         tooltipOutput.accept(Component.translatable("item.prova.black_hole_wand.desc3").withStyle(ChatFormatting.DARK_AQUA));

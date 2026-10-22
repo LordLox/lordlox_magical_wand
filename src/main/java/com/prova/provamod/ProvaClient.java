@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
@@ -22,6 +23,9 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
 
+import com.prova.provamod.client.gui.GamblingD20Overlay;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+
 import java.util.List;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
@@ -30,6 +34,7 @@ public final class ProvaClient {
     public ProvaClient(IEventBus modEventBus) {
         modEventBus.addListener(this::onClientSetup);
         modEventBus.addListener(this::registerRenderers);
+        modEventBus.addListener(this::registerGuiLayers);
 
         // Register gameplay input listener on NeoForge game event bus
         NeoForge.EVENT_BUS.addListener(this::onMouseScroll);
@@ -42,6 +47,13 @@ public final class ProvaClient {
     private void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Prova.BLACK_HOLE.get(), BlackHoleRenderer::new);
         event.registerEntityRenderer(Prova.SPAWN_PORTAL.get(), SpawnPortalRenderer::new);
+    }
+
+    private void registerGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAboveAll(
+                Identifier.fromNamespaceAndPath(Prova.MODID, "gambling_d20_overlay"),
+                GamblingD20Overlay::render
+        );
     }
 
     private void onMouseScroll(InputEvent.MouseScrollingEvent event) {
@@ -115,7 +127,7 @@ public final class ProvaClient {
         // Display overlay message
         Identifier id = Identifier.tryParse(nextMobId);
         Component mobName = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id)
-                .map(type -> type.getDescription())
+                .map(EntityType::getDescription)
                 .orElseGet(() -> Component.translatable("entity." + nextMobId.replace(':', '.')))
                 : Component.translatable("entity." + nextMobId.replace(':', '.'));
 

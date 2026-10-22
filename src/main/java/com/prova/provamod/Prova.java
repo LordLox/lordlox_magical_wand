@@ -8,9 +8,12 @@ import com.mojang.serialization.Codec;
 import com.prova.provamod.entity.BlackHoleEntity;
 import com.prova.provamod.entity.SpawnPortalEntity;
 import com.prova.provamod.item.BlackHoleWandItem;
+import com.prova.provamod.item.GamblingWandItem;
 import com.prova.provamod.item.GravityWandItem;
 import com.prova.provamod.item.SpawnPortalWandItem;
+import com.prova.provamod.gambling.GamblingRollManager;
 import com.prova.provamod.network.ModNetworking;
+import net.neoforged.neoforge.common.NeoForge;
 import java.util.List;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
@@ -58,6 +61,15 @@ public final class Prova {
                     .build()
     );
 
+    // Data Component for storing wagered diamonds on gambling wand
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> GAMBLING_BET = DATA_COMPONENT_TYPES.register(
+            "gambling_bet",
+            () -> DataComponentType.<Integer>builder()
+                    .persistent(Codec.INT)
+                    .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .build()
+    );
+
     // Gravity Wand custom item
     public static final DeferredItem<GravityWandItem> GRAVITY_WAND = ITEMS.registerItem(
             "gravity_wand",
@@ -77,6 +89,13 @@ public final class Prova {
             "spawn_portal_wand",
             SpawnPortalWandItem::new,
             p -> p.durability(100).rarity(Rarity.EPIC)
+    );
+
+    // Gambling Wand custom item
+    public static final DeferredItem<GamblingWandItem> GAMBLING_WAND = ITEMS.registerItem(
+            "gambling_wand",
+            GamblingWandItem::new,
+            p -> p.durability(150).rarity(Rarity.EPIC)
     );
 
     // Black Hole Entity
@@ -108,6 +127,7 @@ public final class Prova {
                 output.accept(GRAVITY_WAND.get());
                 output.accept(BLACK_HOLE_WAND.get());
                 output.accept(SPAWN_PORTAL_WAND.get());
+                output.accept(GAMBLING_WAND.get());
             })
             .build());
 
@@ -119,5 +139,8 @@ public final class Prova {
         DATA_COMPONENT_TYPES.register(modEventBus);
 
         modEventBus.addListener(ModNetworking::registerPayloads);
+
+        // Register server tick listener for gambling wand roll results
+        NeoForge.EVENT_BUS.addListener(GamblingRollManager::onServerTick);
     }
 }

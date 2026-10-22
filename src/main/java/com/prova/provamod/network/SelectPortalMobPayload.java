@@ -12,7 +12,6 @@ public record SelectPortalMobPayload(int handIndex, String mobId) implements Cus
     public static final CustomPacketPayload.Type<SelectPortalMobPayload> TYPE =
             new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(Prova.MODID, "select_portal_mob"));
 
-    @SuppressWarnings("null")
     public static final StreamCodec<FriendlyByteBuf, SelectPortalMobPayload> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, SelectPortalMobPayload::handIndex,

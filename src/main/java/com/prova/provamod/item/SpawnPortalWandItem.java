@@ -6,6 +6,7 @@ import com.prova.provamod.entity.SpawnPortalEntity;
 import com.prova.provamod.portal.PortalMobConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -13,6 +14,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -38,7 +40,6 @@ public class SpawnPortalWandItem extends Item {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
 
@@ -114,13 +115,13 @@ public class SpawnPortalWandItem extends Item {
         for (int dy = 0; dy < 16; dy++) {
             BlockPos check = targetBlock.below(dy);
             var state = level.getBlockState(check);
-            if ((!state.isAir() && state.blocksMotion()) || !state.getFluidState().isEmpty()) {
+            if ((!state.isAir() && (!state.getCollisionShape(level, check).isEmpty() || state.isFaceSturdy(level, check, Direction.UP))) || !state.getFluidState().isEmpty()) {
                 groundBlock = check;
                 break;
             }
         }
         var targetState = level.getBlockState(targetBlock);
-        if (!targetState.isAir() && targetState.blocksMotion()) {
+        if (!targetState.isAir() && (!targetState.getCollisionShape(level, targetBlock).isEmpty() || targetState.isFaceSturdy(level, targetBlock, Direction.UP))) {
             groundBlock = targetBlock;
         }
 
@@ -173,13 +174,11 @@ public class SpawnPortalWandItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipOutput, TooltipFlag flag) {
-        super.appendHoverText(stack, context, display, tooltipOutput, flag);
-
         String selectedMob = stack.get(Prova.SELECTED_MOB.get());
         if (selectedMob != null && !selectedMob.isEmpty()) {
             Identifier id = Identifier.tryParse(selectedMob);
             Component mobName = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id)
-                    .map(type -> type.getDescription())
+                    .map(EntityType::getDescription)
                     .orElseGet(() -> Component.translatable("entity." + selectedMob.replace(':', '.')))
                     : Component.translatable("entity." + selectedMob.replace(':', '.'));
 

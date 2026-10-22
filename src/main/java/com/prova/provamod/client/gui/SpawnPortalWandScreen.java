@@ -36,9 +36,9 @@ public class SpawnPortalWandScreen extends Screen {
     private final InteractionHand hand;
     private String selectedMobId;
     private final List<String> favoriteMobIds = new ArrayList<>();
-    private boolean showOnlyFavorites = false;
+    private boolean showOnlyFavorites;
 
-    private int currentPage = 0;
+    private int currentPage;
     private int totalPages = 1;
 
     private final List<PortalMobRegistry.MobCardEntry> allMobs;

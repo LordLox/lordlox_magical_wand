@@ -12,6 +12,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -32,6 +33,16 @@ public class ModNetworking {
                 SetPortalMobFavoritePayload.STREAM_CODEC,
                 ModNetworking::handleSetPortalMobFavorite
         );
+        registrar.playToServer(
+                SetGamblingBetPayload.TYPE,
+                SetGamblingBetPayload.STREAM_CODEC,
+                ModNetworking::handleSetGamblingBet
+        );
+        registrar.playToClient(
+                RollD20Payload.TYPE,
+                RollD20Payload.STREAM_CODEC,
+                ModNetworking::handleRollD20
+        );
     }
 
     public static void handleSelectPortalMob(SelectPortalMobPayload payload, IPayloadContext context) {
@@ -50,7 +61,7 @@ public class ModNetworking {
 
             Identifier id = Identifier.tryParse(payload.mobId());
             Component mobName = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id)
-                    .map(type -> type.getDescription())
+                    .map(EntityType::getDescription)
                     .orElseGet(() -> Component.translatable("entity." + payload.mobId().replace(':', '.')))
                     : Component.translatable("entity." + payload.mobId().replace(':', '.'));
 
@@ -98,5 +109,26 @@ public class ModNetworking {
             }
             stack.set(Prova.FAVORITE_MOBS.get(), List.copyOf(updated));
         }
+    }
+
+    public static void handleSetGamblingBet(SetGamblingBetPayload payload, IPayloadContext context) {
+        Player player = context.player();
+        if (player == null) {
+            return;
+        }
+
+        InteractionHand hand = payload.handIndex() == 1 ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        ItemStack stack = player.getItemInHand(hand);
+
+        if (stack.is(Prova.GAMBLING_WAND.get())) {
+            int bet = Math.clamp(payload.betAmount(), 0, 20);
+            stack.set(Prova.GAMBLING_BET.get(), bet);
+        }
+    }
+
+    public static void handleRollD20(RollD20Payload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            com.prova.provamod.client.gui.GamblingWandClientHelper.triggerRollOverlay(payload.rollResult(), payload.betAmount());
+        });
     }
 }
