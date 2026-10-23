@@ -167,7 +167,15 @@ public final class ProvaClient {
             addGamblingWandTooltip(stack, event.getToolTip());
         } else if (stack.is(Prova.BLACK_HOLE_WAND.get())) {
             addBlackHoleWandTooltip(stack, event.getToolTip());
+        } else if (stack.is(Prova.GRAVITY_WAND.get())) {
+            addGravityWandTooltip(stack, event.getToolTip());
         }
+    }
+
+    private void addGravityWandTooltip(ItemStack stack, List<Component> tooltip) {
+        int index = Math.min(1, tooltip.size());
+        tooltip.add(index++, Component.translatable("item.prova.gravity_wand.desc1").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
+        tooltip.add(index++, Component.translatable("item.prova.gravity_wand.desc2").withStyle(ChatFormatting.AQUA));
     }
 
     private void addSpawnPortalWandTooltip(ItemStack stack, List<Component> tooltip) {

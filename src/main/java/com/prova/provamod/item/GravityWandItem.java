@@ -1,10 +1,9 @@
 package com.prova.provamod.item;
 
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -13,21 +12,19 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
 import java.util.List;
 
 public class GravityWandItem extends Item {
+
+    public static final double PULL_RANGE = 14.0;
 
     public GravityWandItem(Properties properties) {
         super(properties);
@@ -38,103 +35,116 @@ public class GravityWandItem extends Item {
         ItemStack itemStack = player.getItemInHand(hand);
 
         if (!level.isClientSide()) {
-            double range = 10.0;
+            double range = PULL_RANGE;
+            double rangeSq = range * range;
             AABB area = player.getBoundingBox().inflate(range);
             List<LivingEntity> targets = level.getEntitiesOfClass(
                     LivingEntity.class,
                     area,
                     e -> e != null && e != player && e.isAlive() && !e.isSpectator() && !(e instanceof ArmorStand)
+                            && (!(e instanceof Player p) || !p.isCreative())
+                            && e.distanceToSqr(player) <= rangeSq
             );
 
             // Ordina i bersagli partendo da quelli più vicini al giocatore
             targets.sort(Comparator.comparingDouble(e -> e.distanceToSqr(player)));
 
-            // Se la durabilità rimanente è inferiore al numero di entità, limita i bersagli a quelli sostenibili
-            int maxAllowed = targets.size();
-            if (!player.hasInfiniteMaterials() && itemStack.isDamageableItem()) {
-                int remainingDurability = itemStack.getMaxDamage() - itemStack.getDamageValue();
-                if (remainingDurability < maxAllowed) {
-                    maxAllowed = Math.max(0, remainingDurability);
-                }
-            }
-
-            List<LivingEntity> affectedTargets = targets.subList(0, maxAllowed);
-
             if (player.isShiftKeyDown()) {
-                // Shift + Tasto Destro: Esplosione nemici con particelle di sangue ed esplosione
+                // Shift + Tasto Destro: Attira tutti i mob verso il giocatore con effetti gravitazionali
                 if (level instanceof ServerLevel serverLevel) {
-                    for (LivingEntity target : affectedTargets) {
-                        double tx = target.getX();
-                        double ty = target.getY() + target.getBbHeight() / 2.0;
-                        double tz = target.getZ();
+                    Vec3 playerCenter = player.position().add(0, player.getBbHeight() * 0.5, 0);
 
-                        // Particelle di esplosione
-                        serverLevel.sendParticles(ParticleTypes.EXPLOSION, tx, ty, tz, 2, 0.2, 0.2, 0.2, 0.0);
-                        serverLevel.sendParticles(ParticleTypes.SMOKE, tx, ty, tz, 15, 0.3, 0.3, 0.3, 0.05);
-                        serverLevel.sendParticles(ParticleTypes.FLAME, tx, ty, tz, 8, 0.2, 0.2, 0.2, 0.05);
+                    // Effetto vortice gravitazionale attorno al giocatore (centro di attrazione)
+                    for (int i = 0; i < 24; i++) {
+                        double angle = (i / 24.0) * (2.0 * Math.PI);
+                        double rx = Math.cos(angle);
+                        double rz = Math.sin(angle);
+                        // Anello di particelle cosmiche che implodono verso il giocatore
+                        serverLevel.sendParticles(ParticleTypes.PORTAL, player.getX() + rx * 2.2, player.getY() + 0.2, player.getZ() + rz * 2.2, 1, -rx * 0.6, 0.1, -rz * 0.6, 0.5);
+                        serverLevel.sendParticles(ParticleTypes.WITCH, player.getX() + rx * 1.6, player.getY() + 0.3, player.getZ() + rz * 1.6, 1, 0, 0.04, 0, 0.02);
+                    }
+                    serverLevel.sendParticles(ParticleTypes.REVERSE_PORTAL, player.getX(), player.getY() + 0.8, player.getZ(), 20, 0.4, 0.4, 0.4, 0.08);
+                    serverLevel.sendParticles(ParticleTypes.ENCHANT, player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.6, 0.5, 0.6, 0.5);
+                    serverLevel.sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1.0, player.getZ(), 8, 0.3, 0.4, 0.3, 0.04);
 
-                        // Particelle di sangue (schizzi di sangue rosso vivo, grumi scuri e cuori di danno)
-                        serverLevel.sendParticles(
-                                new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState()),
-                                tx, ty, tz, 45, 0.4, 0.4, 0.4, 0.2);
-                        serverLevel.sendParticles(
-                                new BlockParticleOption(ParticleTypes.BLOCK, Blocks.NETHER_WART_BLOCK.defaultBlockState()),
-                                tx, ty, tz, 25, 0.4, 0.4, 0.4, 0.15);
-                        serverLevel.sendParticles(
-                                new ItemParticleOption(ParticleTypes.ITEM, Items.REDSTONE),
-                                tx, ty, tz, 20, 0.3, 0.3, 0.3, 0.1);
-                        serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, tx, ty, tz, 10, 0.3, 0.3, 0.3, 0.1);
+                    for (LivingEntity target : targets) {
+                        Vec3 targetCenter = target.position().add(0, target.getBbHeight() * 0.5, 0);
+                        Vec3 toPlayer = playerCenter.subtract(targetCenter);
+                        double dist = toPlayer.length();
 
-                        // Suono di esplosione
-                        level.playSound(null, tx, ty, tz,
-                                SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F, 0.9F + level.getRandom().nextFloat() * 0.3F);
+                        if (dist > 0.01) {
+                            Vec3 dir = toPlayer.normalize();
 
-                        // Imposta il fuoco per far attivare le condizioni dei loot table (carne cotta)
-                        target.setRemainingFireTicks(100);
-                        target.igniteForSeconds(5);
-                        target.invulnerableTime = 0;
-                        target.hurtServer(serverLevel, serverLevel.damageSources().playerAttack(player), Float.MAX_VALUE);
-                        if (target.isAlive()) {
-                            target.kill(serverLevel);
-                        }
+                            // Calcola la forza di attrazione proporzionata alla distanza
+                            double speed;
+                            if (dist < 2.0) {
+                                speed = Math.clamp(dist * 0.25, 0.20, 0.45);
+                            } else {
+                                speed = Math.clamp(0.40 + dist * 0.075, 0.40, 1.30);
+                            }
 
-                        // Conversione di sicurezza per qualsiasi carne/cibo droppato che puo essere cotto
-                        AABB dropBox = target.getBoundingBox().inflate(1.5);
-                        List<ItemEntity> droppedItems = serverLevel.getEntitiesOfClass(
-                                ItemEntity.class,
-                                dropBox,
-                                e -> e != null && e.isAlive() && e.tickCount <= 2
-                        );
-                        for (ItemEntity itemEntity : droppedItems) {
-                            ItemStack stack = itemEntity.getItem();
-                            if (stack.has(DataComponents.FOOD)) {
-                                SingleRecipeInput input = new SingleRecipeInput(stack);
-                                var recipe = serverLevel.recipeAccess().getRecipeFor(
-                                        RecipeType.SMELTING,
-                                        input,
-                                        serverLevel
-                                );
-                                if (recipe.isPresent()) {
-                                    ItemStack cooked = recipe.get().value().assemble(input);
-                                    if (!cooked.isEmpty()) {
-                                        itemEntity.setItem(cooked.copyWithCount(stack.getCount() * cooked.getCount()));
-                                    }
+                            // Componente verticale per sollevare leggermente il mob ed evitare che l'attrito del terreno blocchi la trazione
+                            double vy = dir.y * speed + 0.26;
+                            if (player.getY() >= target.getY()) {
+                                vy = Math.max(0.20, vy);
+                            }
+                            vy = Math.clamp(vy, -0.75, 0.60);
+
+                            Vec3 newMotion = new Vec3(dir.x * speed, vy, dir.z * speed);
+                            target.setDeltaMovement(newMotion);
+                            target.hurtMarked = true;
+                            target.resetFallDistance();
+
+                            if (target instanceof ServerPlayer serverTarget) {
+                                serverTarget.connection.send(new ClientboundSetEntityMotionPacket(serverTarget));
+                            }
+
+                            // Fascio di energia gravitazionale (stream di particelle) tra mob e giocatore
+                            int steps = (int) Math.min(14, Math.max(5, dist * 1.4));
+                            for (int step = 1; step < steps; step++) {
+                                double t = (double) step / steps;
+                                double lx = targetCenter.x + toPlayer.x * t;
+                                double ly = targetCenter.y + toPlayer.y * t + Math.sin(t * Math.PI) * 0.6;
+                                double lz = targetCenter.z + toPlayer.z * t;
+
+                                serverLevel.sendParticles(ParticleTypes.PORTAL, lx, ly, lz, 1, dir.x * 0.2, dir.y * 0.2, dir.z * 0.2, 0.15);
+                                if (step % 2 == 0) {
+                                    serverLevel.sendParticles(ParticleTypes.WITCH, lx, ly, lz, 1, 0.02, 0.02, 0.02, 0.01);
+                                }
+                                if (step % 4 == 0) {
+                                    serverLevel.sendParticles(ParticleTypes.END_ROD, lx, ly, lz, 1, 0.01, 0.01, 0.01, 0.01);
                                 }
                             }
+
+                            // Particelle di scatto/sollevamento alla posizione del mob
+                            serverLevel.sendParticles(ParticleTypes.REVERSE_PORTAL, target.getX(), target.getY() + 0.5, target.getZ(), 10, 0.25, 0.25, 0.25, 0.08);
+                            serverLevel.sendParticles(ParticleTypes.WITCH, target.getX(), target.getY() + 0.5, target.getZ(), 6, 0.2, 0.2, 0.2, 0.04);
+                            serverLevel.sendParticles(ParticleTypes.END_ROD, target.getX(), target.getY() + 0.4, target.getZ(), 3, 0.15, 0.15, 0.15, 0.03);
                         }
                     }
 
-                    if (affectedTargets.isEmpty()) {
+                    if (!targets.isEmpty()) {
                         level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                                SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.6F, 1.4F);
+                                SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.2F, 1.4F);
+                        level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                                SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0F, 0.75F);
+                        level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                                SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.6F, 1.2F);
+                    } else {
+                        level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                                SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.5F, 1.6F);
                     }
                 }
             } else {
                 // Regular Right-Click: Zero-Gravity Lift
-                for (LivingEntity target : affectedTargets) {
+                for (LivingEntity target : targets) {
                     target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 80, 1));
                     target.setDeltaMovement(target.getDeltaMovement().add(0, 0.45, 0));
                     target.hurtMarked = true;
+                    if (level instanceof ServerLevel serverLevel) {
+                        serverLevel.sendParticles(ParticleTypes.PORTAL, target.getX(), target.getY() + 0.5, target.getZ(), 10, 0.2, 0.3, 0.2, 0.1);
+                        serverLevel.sendParticles(ParticleTypes.END_ROD, target.getX(), target.getY() + 0.2, target.getZ(), 4, 0.15, 0.2, 0.15, 0.03);
+                    }
                 }
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.ILLUSIONER_CAST_SPELL, SoundSource.PLAYERS, 1.0F, 1.2F);
@@ -142,13 +152,12 @@ public class GravityWandItem extends Item {
 
             player.getCooldowns().addCooldown(itemStack, 30);
 
-            if (!affectedTargets.isEmpty()) {
-                itemStack.hurtAndBreak(affectedTargets.size(), player, hand);
-            } else if (!player.hasInfiniteMaterials() && itemStack.isDamageableItem() && itemStack.getMaxDamage() - itemStack.getDamageValue() <= 0) {
+            if (!player.hasInfiniteMaterials() && itemStack.isDamageableItem()) {
                 itemStack.hurtAndBreak(1, player, hand);
             }
         }
 
+        player.swing(hand);
         return InteractionResult.SUCCESS;
     }
 }

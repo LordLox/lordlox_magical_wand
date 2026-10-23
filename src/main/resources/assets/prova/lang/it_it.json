@@ -1,6 +1,8 @@
 {
   "itemGroup.prova": "Prova",
   "item.prova.gravity_wand": "Bacchetta della Gravità",
+  "item.prova.gravity_wand.desc1": "Tasto Destro: Inverte la gravità facendo levitare i mob",
+  "item.prova.gravity_wand.desc2": "Shift + Tasto Destro: Attira tutti i mob circostanti verso di te",
   "item.prova.black_hole_wand": "Bacchetta del Buco Nero",
   "item.prova.black_hole_wand.desc1": "Tasto Destro: Squarcia lo spaziotempo generando una singolarità",
   "item.prova.black_hole_wand.desc2": "Attira nemici e giocatori nel suo vortice gravitazionale",

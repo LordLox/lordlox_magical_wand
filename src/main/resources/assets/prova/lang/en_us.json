@@ -1,6 +1,8 @@
 {
   "itemGroup.prova": "Prova",
   "item.prova.gravity_wand": "Gravity Wand",
+  "item.prova.gravity_wand.desc1": "Right-Click: Inverts gravity, causing nearby mobs to levitate",
+  "item.prova.gravity_wand.desc2": "Shift + Right-Click: Gravitational surge that pulls all nearby mobs toward you",
   "item.prova.black_hole_wand": "Black Hole Wand",
   "item.prova.black_hole_wand.desc1": "Right-Click: Tear spacetime into an active singularity",
   "item.prova.black_hole_wand.desc2": "Attracts nearby entities into a gravitational vortex",
