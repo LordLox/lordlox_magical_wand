@@ -22,8 +22,10 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import com.prova.provamod.client.gui.GamblingD20Overlay;
+import com.prova.provamod.portal.PortalMobConfig;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 
 import java.util.List;
@@ -37,8 +39,9 @@ public final class ProvaClient {
         modEventBus.addListener(this::registerGuiLayers);
         modEventBus.addListener(this::registerMenuScreens);
 
-        // Register gameplay input listener on NeoForge game event bus
+        // Register gameplay listeners on NeoForge game event bus
         NeoForge.EVENT_BUS.addListener(this::onMouseScroll);
+        NeoForge.EVENT_BUS.addListener(this::onItemTooltip);
     }
 
     private void registerMenuScreens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
@@ -154,5 +157,79 @@ public final class ProvaClient {
         // Send to server
         int handIdx = (hand == InteractionHand.OFF_HAND) ? 1 : 0;
         ClientPacketDistributor.sendToServer(new SelectPortalMobPayload(handIdx, nextMobId));
+    }
+
+    private void onItemTooltip(ItemTooltipEvent event) {
+        ItemStack stack = event.getItemStack();
+        if (stack.is(Prova.SPAWN_PORTAL_WAND.get())) {
+            addSpawnPortalWandTooltip(stack, event.getToolTip());
+        } else if (stack.is(Prova.GAMBLING_WAND.get())) {
+            addGamblingWandTooltip(stack, event.getToolTip());
+        } else if (stack.is(Prova.BLACK_HOLE_WAND.get())) {
+            addBlackHoleWandTooltip(stack, event.getToolTip());
+        }
+    }
+
+    private void addSpawnPortalWandTooltip(ItemStack stack, List<Component> tooltip) {
+        int index = Math.min(1, tooltip.size());
+
+        String selectedMob = stack.get(Prova.SELECTED_MOB.get());
+        if (selectedMob != null && !selectedMob.isEmpty()) {
+            Identifier id = Identifier.tryParse(selectedMob);
+            Component mobName = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id)
+                    .map(EntityType::getDescription)
+                    .orElseGet(() -> Component.translatable("entity." + selectedMob.replace(':', '.')))
+                    : Component.translatable("entity." + selectedMob.replace(':', '.'));
+
+            tooltip.add(index++,
+                    Component.translatable("item.prova.spawn_portal_wand.selected", mobName)
+                            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+            );
+
+            int cost = PortalMobConfig.getDiamondCost(selectedMob);
+            float intervalSec = PortalMobConfig.getSpawnIntervalSeconds(selectedMob);
+            tooltip.add(index++,
+                    Component.translatable("item.prova.spawn_portal_wand.cost_info", cost, String.format(java.util.Locale.ROOT, "%.1f", intervalSec))
+                            .withStyle(ChatFormatting.AQUA)
+            );
+        } else {
+            tooltip.add(index++,
+                    Component.translatable("item.prova.spawn_portal_wand.none_selected")
+                            .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC)
+            );
+        }
+
+        List<String> favorites = stack.get(Prova.FAVORITE_MOBS.get());
+        if (favorites != null && !favorites.isEmpty()) {
+            tooltip.add(index++,
+                    Component.translatable("item.prova.spawn_portal_wand.favorites_count", favorites.size())
+                            .withStyle(ChatFormatting.LIGHT_PURPLE)
+            );
+        }
+
+        tooltip.add(index++, Component.translatable("item.prova.spawn_portal_wand.desc1").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
+        tooltip.add(index++, Component.translatable("item.prova.spawn_portal_wand.desc_scroll").withStyle(ChatFormatting.YELLOW));
+        tooltip.add(index++, Component.translatable("item.prova.spawn_portal_wand.desc2").withStyle(ChatFormatting.AQUA));
+        tooltip.add(index++, Component.translatable("item.prova.spawn_portal_wand.desc3").withStyle(ChatFormatting.DARK_AQUA));
+    }
+
+    private void addGamblingWandTooltip(ItemStack stack, List<Component> tooltip) {
+        int index = Math.min(1, tooltip.size());
+        int bet = stack.getOrDefault(Prova.GAMBLING_BET.get(), 0);
+        tooltip.add(index++,
+                Component.translatable("item.prova.gambling_wand.current_bet", bet)
+                        .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+        );
+
+        tooltip.add(index++, Component.translatable("item.prova.gambling_wand.desc1").withStyle(ChatFormatting.LIGHT_PURPLE));
+        tooltip.add(index++, Component.translatable("item.prova.gambling_wand.desc2").withStyle(ChatFormatting.YELLOW));
+        tooltip.add(index++, Component.translatable("item.prova.gambling_wand.desc3").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
+    }
+
+    private void addBlackHoleWandTooltip(ItemStack stack, List<Component> tooltip) {
+        int index = Math.min(1, tooltip.size());
+        tooltip.add(index++, Component.translatable("item.prova.black_hole_wand.desc1").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
+        tooltip.add(index++, Component.translatable("item.prova.black_hole_wand.desc2").withStyle(ChatFormatting.GRAY));
+        tooltip.add(index++, Component.translatable("item.prova.black_hole_wand.desc3").withStyle(ChatFormatting.DARK_AQUA));
     }
 }

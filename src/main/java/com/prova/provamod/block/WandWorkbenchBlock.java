@@ -8,7 +8,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -28,15 +27,14 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
 
-public class WandWorkbenchBlock extends HorizontalDirectionalBlock {
-    public static final MapCodec<WandWorkbenchBlock> CODEC = simpleCodec(WandWorkbenchBlock::new);
-    public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
+public final class WandWorkbenchBlock extends HorizontalDirectionalBlock {
+    public static final MapCodec<WandWorkbenchBlock> MAP_CODEC = simpleCodec(WandWorkbenchBlock::new);
     public static final EnumProperty<WandWorkbenchPart> PART = EnumProperty.create("part", WandWorkbenchPart.class);
     private static final Component CONTAINER_TITLE = Component.translatable("container.prova.wand_workbench");
 
     @Override
     public MapCodec<WandWorkbenchBlock> codec() {
-        return CODEC;
+        return MAP_CODEC;
     }
 
     public WandWorkbenchBlock(BlockBehaviour.Properties properties) {

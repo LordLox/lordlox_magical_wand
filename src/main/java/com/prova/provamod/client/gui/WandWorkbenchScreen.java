@@ -2,13 +2,11 @@ package com.prova.provamod.client.gui;
 
 import com.prova.provamod.Prova;
 import com.prova.provamod.world.inventory.WandWorkbenchMenu;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
 public class WandWorkbenchScreen extends AbstractContainerScreen<WandWorkbenchMenu> {

@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
-public class WandWorkbenchMenu extends AbstractContainerMenu {
+public final class WandWorkbenchMenu extends AbstractContainerMenu {
     public static final int GRID_WIDTH = 5;
     public static final int GRID_HEIGHT = 5;
     public static final int RESULT_SLOT = 0;

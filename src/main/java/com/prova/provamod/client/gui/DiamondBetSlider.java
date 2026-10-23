@@ -28,13 +28,11 @@ public final class DiamondBetSlider extends AbstractSliderButton {
     @Override
     protected void updateMessage() {
         int bet = getBetAmount();
-        if (bet == 0) {
-            this.setMessage(Component.translatable("gui.prova.gambling_wand.slider_zero"));
-        } else if (bet == 1) {
-            this.setMessage(Component.translatable("gui.prova.gambling_wand.slider_single", bet));
-        } else {
-            this.setMessage(Component.translatable("gui.prova.gambling_wand.slider_multiple", bet));
-        }
+        this.setMessage(switch (bet) {
+            case 0 -> Component.translatable("gui.prova.gambling_wand.slider_zero");
+            case 1 -> Component.translatable("gui.prova.gambling_wand.slider_single", bet);
+            default -> Component.translatable("gui.prova.gambling_wand.slider_multiple", bet);
+        });
     }
 
     @Override

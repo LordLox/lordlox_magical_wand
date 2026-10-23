@@ -14,12 +14,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
-
-import java.util.function.Consumer;
 
 public class GamblingWandItem extends Item {
 
@@ -130,18 +126,5 @@ public class GamblingWandItem extends Item {
 
         player.swing(hand);
         return InteractionResult.SUCCESS;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipOutput, TooltipFlag flag) {
-        int bet = stack.getOrDefault(Prova.GAMBLING_BET.get(), 0);
-        tooltipOutput.accept(
-                Component.translatable("item.prova.gambling_wand.current_bet", bet)
-                        .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-        );
-
-        tooltipOutput.accept(Component.translatable("item.prova.gambling_wand.desc1").withStyle(ChatFormatting.LIGHT_PURPLE));
-        tooltipOutput.accept(Component.translatable("item.prova.gambling_wand.desc2").withStyle(ChatFormatting.YELLOW));
-        tooltipOutput.accept(Component.translatable("item.prova.gambling_wand.desc3").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
     }
 }

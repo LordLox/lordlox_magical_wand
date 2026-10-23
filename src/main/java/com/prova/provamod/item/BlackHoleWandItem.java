@@ -2,8 +2,6 @@ package com.prova.provamod.item;
 
 import com.prova.provamod.Prova;
 import com.prova.provamod.entity.BlackHoleEntity;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -11,15 +9,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.function.Consumer;
 
 public class BlackHoleWandItem extends Item {
 
@@ -83,13 +77,5 @@ public class BlackHoleWandItem extends Item {
 
         player.swing(hand);
         return InteractionResult.SUCCESS;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipOutput, TooltipFlag flag) {
-        tooltipOutput.accept(Component.translatable("item.prova.black_hole_wand.desc1").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
-        tooltipOutput.accept(Component.translatable("item.prova.black_hole_wand.desc2").withStyle(ChatFormatting.GRAY));
-        tooltipOutput.accept(Component.translatable("item.prova.black_hole_wand.desc3").withStyle(ChatFormatting.DARK_AQUA));
     }
 }
