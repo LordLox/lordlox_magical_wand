@@ -25,6 +25,8 @@ import java.util.List;
 public class GravityWandItem extends Item {
 
     public static final double PULL_RANGE = 14.0;
+    public static final int LIFT_COOLDOWN = 120; // 6 secondi: impedisce lo spam infinito della levitazione
+    public static final int PULL_COOLDOWN = 20;  // 1 secondo: trazione gravitazionale rapida e reattiva
 
     public GravityWandItem(Properties properties) {
         super(properties);
@@ -150,7 +152,8 @@ public class GravityWandItem extends Item {
                         SoundEvents.ILLUSIONER_CAST_SPELL, SoundSource.PLAYERS, 1.0F, 1.2F);
             }
 
-            player.getCooldowns().addCooldown(itemStack, 30);
+            int cooldown = player.isShiftKeyDown() ? PULL_COOLDOWN : LIFT_COOLDOWN;
+            player.getCooldowns().addCooldown(itemStack, cooldown);
 
             if (!player.hasInfiniteMaterials() && itemStack.isDamageableItem()) {
                 itemStack.hurtAndBreak(1, player, hand);
