@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "g": "minecraft:gold_ingot",
+    "o": "minecraft:amethyst_shard",
+    "p": "minecraft:phantom_membrane",
+    "s": "#c:rods/wooden"
+  },
+  "pattern": [
+    "pooop",
+    "pgsgp",
+    " gsg ",
+    " gsg ",
+    " gsg "
+  ],
+  "result": {
+    "count": 1,
+    "id": "lordlox_magical_wands:gravity_wand"
+  }
+}

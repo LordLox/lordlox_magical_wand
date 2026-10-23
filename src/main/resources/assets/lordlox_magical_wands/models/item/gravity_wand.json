@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "lordlox_magical_wands:item/gravity_wand"
+  }
+}

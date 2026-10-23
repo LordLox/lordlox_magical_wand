@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "lordlox_magical_wands:block/wand_workbench_bottom",
+    "east": "lordlox_magical_wands:block/wand_workbench_side_inner",
+    "north": "lordlox_magical_wands:block/wand_workbench_front_right",
+    "particle": "lordlox_magical_wands:block/wand_workbench_front_right",
+    "south": "lordlox_magical_wands:block/wand_workbench_back",
+    "up": "lordlox_magical_wands:block/wand_workbench_top_right",
+    "west": "lordlox_magical_wands:block/wand_workbench_side_outer"
+  }
+}

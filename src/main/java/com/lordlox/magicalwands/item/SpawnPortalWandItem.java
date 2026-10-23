@@ -1,0 +1,168 @@
+package com.lordlox.magicalwands.item;
+
+import com.lordlox.magicalwands.MagicalWands;
+import com.lordlox.magicalwands.client.gui.SpawnPortalWandClientHelper;
+import com.lordlox.magicalwands.entity.SpawnPortalEntity;
+import com.lordlox.magicalwands.portal.PortalMobConfig;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
+
+public class SpawnPortalWandItem extends Item {
+
+    public static final double MAX_CAST_DISTANCE = 20.0;
+    public static final int DEFAULT_DIAMONDS_REQUIRED = 2;
+
+    public SpawnPortalWandItem(Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
+
+        // Sneak + Right Click: Open the 3D Mob Card Selection Screen
+        if (player.isShiftKeyDown()) {
+            if (level.isClientSide()) {
+                String currentMob = itemStack.get(MagicalWands.SELECTED_MOB.get());
+                List<String> favorites = itemStack.get(MagicalWands.FAVORITE_MOBS.get());
+                SpawnPortalWandClientHelper.openScreen(hand, currentMob, favorites);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        // Normal Right Click: Summon the Spawn Portal
+        String selectedMob = itemStack.get(MagicalWands.SELECTED_MOB.get());
+        if (selectedMob == null || selectedMob.isEmpty()) {
+            if (!level.isClientSide()) {
+                player.sendOverlayMessage(
+                        Component.translatable("item.lordlox_magical_wands.spawn_portal_wand.no_mob_selected")
+                                .withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD)
+                );
+                level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.DISPENSER_FAIL, SoundSource.PLAYERS, 1.0F, 1.0F);
+            }
+            return InteractionResult.FAIL;
+        }
+
+        boolean isCreative = player.hasInfiniteMaterials();
+        int diamondCost = PortalMobConfig.getDiamondCost(selectedMob);
+
+        // Check if player has at least diamondCost diamonds
+        if (!isCreative) {
+            int diamondCount = 0;
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                ItemStack stack = player.getInventory().getItem(i);
+                if (stack.is(Items.DIAMOND)) {
+                    diamondCount += stack.getCount();
+                }
+            }
+
+            if (diamondCount < diamondCost) {
+                if (!level.isClientSide()) {
+                    player.sendOverlayMessage(
+                            Component.translatable("item.lordlox_magical_wands.spawn_portal_wand.need_diamonds", diamondCost)
+                                    .withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
+                    );
+                    level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                            SoundEvents.VILLAGER_NO, SoundSource.PLAYERS, 1.0F, 1.0F);
+                }
+                return InteractionResult.FAIL;
+            }
+        }
+
+        // Calculate portal position: ensure it floats nicely near the ground (~2.3 blocks above ground)
+        Vec3 eyePos = player.getEyePosition();
+        Vec3 lookVec = player.getViewVector(1.0F);
+        Vec3 maxReachPos = eyePos.add(lookVec.scale(MAX_CAST_DISTANCE));
+
+        ClipContext clipContext = new ClipContext(
+                eyePos,
+                maxReachPos,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                player
+        );
+        BlockHitResult hitResult = level.clip(clipContext);
+
+        Vec3 targetPos = (hitResult.getType() == HitResult.Type.BLOCK) ? hitResult.getLocation() : eyePos.add(lookVec.scale(12.0));
+
+        // Find ground level directly beneath target position
+        BlockPos targetBlock = BlockPos.containing(targetPos);
+        BlockPos groundBlock = targetBlock;
+        for (int dy = 0; dy < 16; dy++) {
+            BlockPos check = targetBlock.below(dy);
+            var state = level.getBlockState(check);
+            if ((!state.isAir() && (!state.getCollisionShape(level, check).isEmpty() || state.isFaceSturdy(level, check, Direction.UP))) || !state.getFluidState().isEmpty()) {
+                groundBlock = check;
+                break;
+            }
+        }
+        var targetState = level.getBlockState(targetBlock);
+        if (!targetState.isAir() && (!targetState.getCollisionShape(level, targetBlock).isEmpty() || targetState.isFaceSturdy(level, targetBlock, Direction.UP))) {
+            groundBlock = targetBlock;
+        }
+
+        // Position vertical portal so its base (radius 1.35) rests right at ground level (+1.0)
+        Vec3 portalSpawnPos = new Vec3(targetPos.x, groundBlock.getY() + 2.35, targetPos.z);
+
+        if (!level.isClientSide()) {
+            // Consume diamonds
+            if (!isCreative) {
+                int toConsume = diamondCost;
+                for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                    ItemStack invStack = player.getInventory().getItem(i);
+                    if (invStack.is(Items.DIAMOND)) {
+                        int take = Math.min(toConsume, invStack.getCount());
+                        invStack.shrink(take);
+                        toConsume -= take;
+                        if (toConsume <= 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Spawn portal entity facing the cast direction
+            SpawnPortalEntity portal = new SpawnPortalEntity(MagicalWands.SPAWN_PORTAL.get(), level);
+            portal.setPos(portalSpawnPos.x, portalSpawnPos.y, portalSpawnPos.z);
+            portal.setPortalYaw(player.getYRot());
+            portal.setOwner(player);
+            portal.setSelectedMobId(selectedMob);
+            level.addFreshEntity(portal);
+
+            // Cooldown and durability
+            player.getCooldowns().addCooldown(itemStack, 100); // 5 seconds cooldown
+            if (!isCreative && itemStack.isDamageableItem()) {
+                itemStack.hurtAndBreak(1, player, hand);
+            }
+
+            // Casting sounds
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.EVOKER_CAST_SPELL, SoundSource.PLAYERS, 1.0F, 0.7F);
+            level.playSound(null, portalSpawnPos.x, portalSpawnPos.y, portalSpawnPos.z,
+                    SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, 1.4F, 0.7F);
+            level.playSound(null, portalSpawnPos.x, portalSpawnPos.y, portalSpawnPos.z,
+                    SoundEvents.RESPAWN_ANCHOR_SET_SPAWN, SoundSource.PLAYERS, 1.2F, 1.1F);
+        }
+
+        player.swing(hand);
+        return InteractionResult.SUCCESS;
+    }
+}

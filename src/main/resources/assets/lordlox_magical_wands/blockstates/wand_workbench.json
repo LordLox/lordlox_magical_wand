@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=north,part=left": {
+      "model": "lordlox_magical_wands:block/wand_workbench_left",
+      "y": 0
+    },
+    "facing=east,part=left": {
+      "model": "lordlox_magical_wands:block/wand_workbench_left",
+      "y": 90
+    },
+    "facing=south,part=left": {
+      "model": "lordlox_magical_wands:block/wand_workbench_left",
+      "y": 180
+    },
+    "facing=west,part=left": {
+      "model": "lordlox_magical_wands:block/wand_workbench_left",
+      "y": 270
+    },
+    "facing=north,part=right": {
+      "model": "lordlox_magical_wands:block/wand_workbench_right",
+      "y": 0
+    },
+    "facing=east,part=right": {
+      "model": "lordlox_magical_wands:block/wand_workbench_right",
+      "y": 90
+    },
+    "facing=south,part=right": {
+      "model": "lordlox_magical_wands:block/wand_workbench_right",
+      "y": 180
+    },
+    "facing=west,part=right": {
+      "model": "lordlox_magical_wands:block/wand_workbench_right",
+      "y": 270
+    }
+  }
+}
