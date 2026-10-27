@@ -38,3 +38,9 @@ run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+
+### Local / Personal Notes ###
+TODO.md
+todo.md
+TODO.txt
+todo.txt
