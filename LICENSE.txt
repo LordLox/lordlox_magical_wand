@@ -1,0 +1,12 @@
+Copyright (c) 2026 LordLox. All Rights Reserved.
+
+LordLox's Magical Wands Mod
+
+You are free to:
+- Play this mod in any personal, multiplayer, or public Minecraft environment.
+- Include this mod in any curseforge / modpack / server pack, provided attribution is given.
+- Create gameplay videos, streams, and reviews featuring this mod.
+
+You may NOT:
+- Redistribute, re-upload, or claim this mod as your own on external websites without explicit permission from LordLox.
+- Sell this mod or charge money for access to it.

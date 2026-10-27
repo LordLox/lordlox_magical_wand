@@ -1,5 +1,5 @@
 ### Gradle ###
-.gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/**/build/
@@ -11,7 +11,6 @@ build/
 *.ipr
 out/
 !**/src/**/out/
-
 .run/
 
 ### Eclipse ###
@@ -20,7 +19,7 @@ out/
 .eclipse/
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 bin/
@@ -29,18 +28,52 @@ bin/
 ### VS Code ###
 .vscode/
 
-### Mac OS ###
-.DS_Store
+### Environment & Secrets ###
+.env
+.env.*
+*.env
+*.local
+*.keystore
+*.jks
+*.key
+*.pem
 
-### Minecraft Modding ###
+### Operating System & Temporary Files ###
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.directory
+*.swp
+*~
+
+### Minecraft Modding Runtime & Cache ###
 run/
 !**/src/**/run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+crash-reports/
+logs/
+*.log
+hs_err_pid*
+replay_pid*
 
-### Local / Personal Notes ###
+### AI Agents & Local IDE Assistants ###
+.agents/
+.cursor/
+.gemini/
+
+### Local Personal Guides & Notes ###
 TODO.md
 todo.md
 TODO.txt
 todo.txt
+COME_PUBBLICARE_SU_CURSEFORGE.md
+come_pubblicare_su_curseforge.md
+CURSEFORGE_PAGE.md
+curseforge_page.md
+logo mod.png
+*.private.*
+*.personal.*
