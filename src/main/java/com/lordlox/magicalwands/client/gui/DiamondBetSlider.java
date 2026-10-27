@@ -7,20 +7,22 @@ import java.util.function.Consumer;
 
 public final class DiamondBetSlider extends AbstractSliderButton {
 
+    public static final int MAX_BET = 32;
+
     private final Consumer<Integer> onValueChanged;
 
     public DiamondBetSlider(int x, int y, int width, int height, int initialBet, Consumer<Integer> onValueChanged) {
-        super(x, y, width, height, Component.empty(), Math.clamp((double) initialBet / 20.0, 0.0, 1.0));
+        super(x, y, width, height, Component.empty(), Math.clamp((double) initialBet / (double) MAX_BET, 0.0, 1.0));
         this.onValueChanged = onValueChanged;
         updateMessage();
     }
 
     public int getBetAmount() {
-        return (int) Math.round(this.value * 20.0);
+        return (int) Math.round(this.value * (double) MAX_BET);
     }
 
     public void setBetAmount(int bet) {
-        this.value = Math.clamp((double) bet / 20.0, 0.0, 1.0);
+        this.value = Math.clamp((double) bet / (double) MAX_BET, 0.0, 1.0);
         updateMessage();
         applyValue();
     }

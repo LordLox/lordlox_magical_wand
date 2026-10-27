@@ -36,7 +36,7 @@ public class GamblingWandScreen extends Screen {
     public GamblingWandScreen(InteractionHand hand, int initialBet) {
         super(Component.translatable("gui.lordlox_magical_wands.gambling_wand.title"));
         this.hand = hand;
-        this.currentBet = Math.clamp(initialBet, 0, 20);
+        this.currentBet = Math.clamp(initialBet, 0, DiamondBetSlider.MAX_BET);
 
         Player player = Minecraft.getInstance().player;
         if (player != null) {
@@ -70,8 +70,8 @@ public class GamblingWandScreen extends Screen {
                 newBet -> this.currentBet = newBet
         ));
 
-        // Quick Preset Buttons: 0, 5, 10, 15, 20, MAX
-        int[] presets = {0, 5, 10, 15, 20};
+        // Quick Preset Buttons: 0, 8, 16, 24, 32, MAX
+        int[] presets = {0, 8, 16, 24, 32};
         int presetBtnWidth = 28;
         int presetBtnHeight = 16;
         int totalPresetsWidth = presets.length * presetBtnWidth + (presets.length - 1) * 4 + 36;
@@ -92,7 +92,7 @@ public class GamblingWandScreen extends Screen {
         }
 
         // MAX button
-        int maxBetPossible = isCreative ? 20 : Math.min(20, availableDiamonds);
+        int maxBetPossible = isCreative ? DiamondBetSlider.MAX_BET : Math.min(DiamondBetSlider.MAX_BET, availableDiamonds);
         this.addRenderableWidget(
                 Button.builder(Component.translatable("gui.lordlox_magical_wands.gambling_wand.btn_max").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), b -> {
                     this.currentBet = maxBetPossible;
@@ -172,11 +172,11 @@ public class GamblingWandScreen extends Screen {
     private Component getLuckDescription(int bet) {
         if (bet == 0) {
             return Component.translatable("gui.lordlox_magical_wands.gambling_wand.luck_0").withStyle(ChatFormatting.GRAY);
-        } else if (bet <= 5) {
+        } else if (bet <= 8) {
             return Component.translatable("gui.lordlox_magical_wands.gambling_wand.luck_low").withStyle(ChatFormatting.YELLOW);
-        } else if (bet <= 12) {
+        } else if (bet <= 18) {
             return Component.translatable("gui.lordlox_magical_wands.gambling_wand.luck_med").withStyle(ChatFormatting.GREEN);
-        } else if (bet <= 19) {
+        } else if (bet <= 31) {
             return Component.translatable("gui.lordlox_magical_wands.gambling_wand.luck_high").withStyle(ChatFormatting.AQUA);
         } else {
             return Component.translatable("gui.lordlox_magical_wands.gambling_wand.luck_max").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);

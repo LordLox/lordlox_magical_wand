@@ -121,7 +121,7 @@ public class ModNetworking {
         ItemStack stack = player.getItemInHand(hand);
 
         if (stack.is(MagicalWands.GAMBLING_WAND.get())) {
-            int bet = Math.clamp(payload.betAmount(), 0, 20);
+            int bet = Math.clamp(payload.betAmount(), 0, 32);
             stack.set(MagicalWands.GAMBLING_BET.get(), bet);
         }
     }

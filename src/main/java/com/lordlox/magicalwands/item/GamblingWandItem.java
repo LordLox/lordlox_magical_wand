@@ -54,7 +54,7 @@ public class GamblingWandItem extends Item {
         }
 
         int bet = itemStack.getOrDefault(MagicalWands.GAMBLING_BET.get(), 0);
-        bet = Math.clamp(bet, 0, 20);
+        bet = Math.clamp(bet, 0, 32);
 
         boolean isCreative = player.hasInfiniteMaterials();
 
@@ -97,7 +97,7 @@ public class GamblingWandItem extends Item {
         if (bet == 0) {
             roll = 1 + level.getRandom().nextInt(20);
         } else {
-            double power = 1.0 + (bet * 0.15);
+            double power = 1.0 + (bet * 0.185);
             double u = level.getRandom().nextDouble();
             double biased = Math.pow(u, 1.0 / power);
             roll = Math.clamp((int)(1 + 20 * biased), 1, 20);
