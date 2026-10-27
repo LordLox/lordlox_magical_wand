@@ -2,13 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
+    "e": "minecraft:end_crystal",
     "g": "minecraft:gold_ingot",
     "o": "minecraft:dragon_breath",
     "p": "minecraft:phantom_membrane",
     "s": "#c:rods/wooden"
   },
   "pattern": [
-    "pooop",
+    "poeop",
     "pgsgp",
     " gsg ",
     " gsg ",
